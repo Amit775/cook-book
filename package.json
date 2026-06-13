@@ -11,12 +11,16 @@
   "private": true,
   "packageManager": "npm@11.6.2",
   "dependencies": {
+    "@angular/cdk": "^22.0.1",
     "@angular/common": "^22.0.0",
     "@angular/compiler": "^22.0.0",
     "@angular/core": "^22.0.0",
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
+    "@dataconnect/generated": "file:src/dataconnect-generated",
+    "@jsverse/transloco": "^8.4.0",
+    "firebase": "^12.14.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

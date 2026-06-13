@@ -1,4 +1,3 @@
-
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
 ## TypeScript Best Practices
@@ -52,3 +51,17 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Cookbook project specifics
+
+This is a recipe-sharing app (meals, desserts, cocktails) with clone-based versioning.
+
+- **Naming:** never abbreviate variable/field names — `quantity` not `qty`, `prepTime`/`cookTime` not `prepMin`/`cookMin`, `userId` not `uid`. Acronyms like `URL`/`ID` are fine.
+- **Forms:** use Angular v22 **Signal Forms** for the recipe editor (not Reactive/Template forms).
+- **Firebase:** use the official modular SDK (`firebase@12`) directly via the DI tokens in `src/app/core/firebase/firebase.providers.ts` (`FIREBASE_AUTH`, `FIRESTORE`, `FIREBASE_STORAGE`). Do NOT add `@angular/fire` — it does not support Angular v22 yet.
+- **Durations:** `prepTime`/`cookTime` are ISO 8601 duration strings (e.g. `PT30M`). Helpers in `src/app/core/models/duration.model.ts`.
+- **i18n / RTL:** Hebrew-first, RTL by default. Use Transloco (`*transloco="let t"`) for all user-facing text — add keys to both `public/i18n/he.json` and `public/i18n/en.json`. Use CSS **logical properties** (`margin-inline`, `padding-inline`, `inset-inline`) so layout flips automatically; never hard-code left/right.
+- **Auth:** Google + Phone only (`AuthService` in `src/app/core/services`).
+- **Sharing model:** clone-only — shared users can view and clone, never co-edit. A clone is a new owned doc linked by `parentId` + `rootId`.
+- **Structure:** `core/` (models, services, firebase, i18n), `features/` (lazy-loaded route pages), `shared/` (reusable UI). Feature routes are lazy via `loadComponent`.
+- **Security:** Firestore/Storage rules at repo root are the real access boundary — keep them in sync with any new query shapes (queries must filter to what the rules allow, or the whole query is rejected).

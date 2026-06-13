@@ -1,0 +1,36 @@
+{
+  "app": {
+    "title": "ספר מתכונים"
+  },
+  "nav": {
+    "browse": "עיון",
+    "create": "מתכון חדש",
+    "library": "הספרייה שלי"
+  },
+  "actions": {
+    "toggleLanguage": "English",
+    "signIn": "התחברות",
+    "signOut": "התנתקות"
+  },
+  "home": {
+    "heading": "ברוכים הבאים לספר המתכונים",
+    "subheading": "צרו, שתפו ושכפלו מתכונים של מנות, קינוחים וקוקטיילים."
+  },
+  "create": {
+    "heading": "מתכון חדש",
+    "placeholder": "עורך המתכונים יגיע בשלב הבא."
+  },
+  "library": {
+    "heading": "הספרייה שלי",
+    "placeholder": "כאן יוצגו המתכונים שלך, מה ששותף איתך והמועדפים."
+  },
+  "recipeDetail": {
+    "placeholder": "תצוגת המתכון תגיע בשלב הבא.",
+    "otherVersions": "גרסאות אחרות"
+  },
+  "login": {
+    "heading": "התחברות",
+    "google": "המשך עם Google",
+    "phone": "המשך עם טלפון (בקרוב)"
+  }
+}

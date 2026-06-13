@@ -1,1 +1,85 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles. Layout uses CSS logical properties so it flips automatically
+   between RTL (Hebrew) and LTR (English). */
+
+:root {
+  --color-bg: #faf7f2;
+  --color-surface: #ffffff;
+  --color-text: #2b2b2b;
+  --color-text-muted: #6b6b6b;
+  --color-border: #e6e1d8;
+  --color-accent: #c0562b;
+  --color-accent-contrast: #ffffff;
+  --color-error: #b3261e;
+  --radius: 10px;
+  --max-content-width: 960px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Segoe UI', 'Heebo', 'Assistant', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+}
+
+.page {
+  max-inline-size: var(--max-content-width);
+  margin-inline: auto;
+}
+
+.page--narrow {
+  max-inline-size: 420px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-block: 0.6rem;
+  padding-inline: 1.1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.button--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-block-start: 1.5rem;
+}
+
+.error {
+  color: var(--color-error);
+  margin-block-start: 1rem;
+}

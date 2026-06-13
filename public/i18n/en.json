@@ -1,0 +1,36 @@
+{
+  "app": {
+    "title": "Cookbook"
+  },
+  "nav": {
+    "browse": "Browse",
+    "create": "New recipe",
+    "library": "My library"
+  },
+  "actions": {
+    "toggleLanguage": "עברית",
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "home": {
+    "heading": "Welcome to the Cookbook",
+    "subheading": "Create, share and clone recipes for meals, desserts and cocktails."
+  },
+  "create": {
+    "heading": "New recipe",
+    "placeholder": "The recipe editor arrives in the next phase."
+  },
+  "library": {
+    "heading": "My library",
+    "placeholder": "Your recipes, what's shared with you, and your favorites will appear here."
+  },
+  "recipeDetail": {
+    "placeholder": "The recipe view arrives in the next phase.",
+    "otherVersions": "Other versions"
+  },
+  "login": {
+    "heading": "Sign in",
+    "google": "Continue with Google",
+    "phone": "Continue with phone (coming soon)"
+  }
+}
