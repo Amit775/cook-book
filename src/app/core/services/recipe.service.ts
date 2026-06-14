@@ -48,10 +48,73 @@ export class RecipeService {
   async listMyRecipes(userId: string): Promise<Recipe[]> {
     const ownedQuery = query(this.recipesCollection, where('authorId', '==', userId));
     const snapshot = await getDocs(ownedQuery);
-    return snapshot.docs
-      .map((document) => toRecipe(document.id, document.data()))
-      .sort((first, second) => second.updatedAt.getTime() - first.updatedAt.getTime());
+    return sortByUpdatedDescending(snapshot.docs.map((document) => toRecipe(document.id, document.data())));
   }
+
+  /** Publicly browsable recipes (`visibility == 'public'`), newest first. */
+  async listPublicRecipes(): Promise<Recipe[]> {
+    const publicQuery = query(this.recipesCollection, where('visibility', '==', 'public'));
+    const snapshot = await getDocs(publicQuery);
+    return sortByUpdatedDescending(snapshot.docs.map((document) => toRecipe(document.id, document.data())));
+  }
+
+  /**
+   * Other readable recipes in the same clone family (same `rootId`): the public
+   * ones plus, when signed in, the user's own. The two queries each match a
+   * single Firestore-rules read condition so neither is rejected. Excludes
+   * `excludeRecipeId` (the recipe currently being viewed).
+   */
+  async listVersions(rootId: string, currentUserId: string | null, excludeRecipeId: string): Promise<Recipe[]> {
+    const requests = [getDocs(query(this.recipesCollection, where('rootId', '==', rootId), where('visibility', '==', 'public')))];
+    if (currentUserId) {
+      requests.push(getDocs(query(this.recipesCollection, where('rootId', '==', rootId), where('authorId', '==', currentUserId))));
+    }
+    const snapshots = await Promise.all(requests);
+    const byId = new Map<string, Recipe>();
+    for (const snapshot of snapshots) {
+      for (const document of snapshot.docs) {
+        if (document.id !== excludeRecipeId) {
+          byId.set(document.id, toRecipe(document.id, document.data()));
+        }
+      }
+    }
+    return sortByUpdatedDescending([...byId.values()]);
+  }
+
+  /**
+   * Clone `source` into a new recipe owned by `cloner`. The clone keeps the
+   * family's `rootId`, links back via `parentId`, and starts `private`. Returns
+   * the new id.
+   */
+  async cloneRecipe(source: Recipe, cloner: User): Promise<string> {
+    const reference = doc(this.recipesCollection);
+    await setDoc(reference, {
+      title: source.title,
+      description: source.description,
+      type: source.type,
+      visibility: 'private',
+      sharedWith: [],
+      authorId: cloner.uid,
+      rootId: source.rootId,
+      parentId: source.recipeId,
+      ingredients: source.ingredients,
+      steps: source.steps,
+      tags: source.tags,
+      keywords: source.keywords,
+      servings: source.servings,
+      prepTime: source.prepTime,
+      cookTime: source.cookTime,
+      coverPhotoPath: source.coverPhotoPath,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return reference.id;
+  }
+}
+
+/** Sort recipes by `updatedAt`, newest first (in place-safe, returns the array). */
+function sortByUpdatedDescending(recipes: Recipe[]): Recipe[] {
+  return recipes.sort((first, second) => second.updatedAt.getTime() - first.updatedAt.getTime());
 }
 
 /** Lowercased, de-duplicated search terms from title + tags + ingredient names. */

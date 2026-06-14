@@ -5,10 +5,11 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { Recipe } from '../../core/models/recipe.model';
 import { RecipeService } from '../../core/services/recipe.service';
 import { SessionStore } from '../../core/state/session.store';
+import { RecipeCard } from '../../shared/recipe-card/recipe-card';
 
 @Component({
   selector: 'app-library-page',
-  imports: [TranslocoDirective, RouterLink],
+  imports: [TranslocoDirective, RouterLink, RecipeCard],
   template: `
     <section class="page" *transloco="let t">
       <div class="page-header">
@@ -24,14 +25,11 @@ import { SessionStore } from '../../core/state/session.store';
       } @else if (recipesResource.value().length === 0) {
         <p>{{ t('library.empty') }}</p>
       } @else {
-        <ul class="recipe-list">
+        <div class="recipe-grid">
           @for (recipe of recipesResource.value(); track recipe.recipeId) {
-            <li>
-              <a [routerLink]="['/recipes', recipe.recipeId]">{{ recipe.title }}</a>
-              <span class="recipe-list-type">{{ t('recipeType.' + recipe.type) }}</span>
-            </li>
+            <app-recipe-card [recipe]="recipe" />
           }
-        </ul>
+        </div>
       }
     </section>
   `,

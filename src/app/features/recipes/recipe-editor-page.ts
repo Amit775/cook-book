@@ -8,6 +8,7 @@ import { Ingredient } from '../../core/models/ingredient.model';
 import { RECIPE_TYPES, RecipeType } from '../../core/models/recipe-type.model';
 import { RECIPE_VISIBILITIES, RecipeVisibility } from '../../core/models/recipe-visibility.model';
 import { RecipeService } from '../../core/services/recipe.service';
+import { StorageService } from '../../core/services/storage.service';
 import { SessionStore } from '../../core/state/session.store';
 
 interface RecipeEditorModel {
@@ -45,6 +46,7 @@ function emptyModel(): RecipeEditorModel {
 })
 export class RecipeEditorPage {
   private readonly recipeService = inject(RecipeService);
+  private readonly storageService = inject(StorageService);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
 
@@ -52,6 +54,8 @@ export class RecipeEditorPage {
   protected readonly visibilities = RECIPE_VISIBILITIES;
   protected readonly isSignedIn = this.session.isAuthenticated;
   protected readonly isSaving = signal(false);
+  protected readonly coverPhotoFile = signal<File | null>(null);
+  protected readonly coverPhotoPreview = signal<string | null>(null);
 
   protected readonly model = signal<RecipeEditorModel>(emptyModel());
   protected readonly recipeForm = form(this.model, (path) => {
@@ -90,6 +94,26 @@ export class RecipeEditorPage {
     }));
   }
 
+  onCoverPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    const previousPreview = this.coverPhotoPreview();
+    if (previousPreview) {
+      URL.revokeObjectURL(previousPreview);
+    }
+    this.coverPhotoFile.set(file);
+    this.coverPhotoPreview.set(file ? URL.createObjectURL(file) : null);
+  }
+
+  removeCoverPhoto(): void {
+    const previousPreview = this.coverPhotoPreview();
+    if (previousPreview) {
+      URL.revokeObjectURL(previousPreview);
+    }
+    this.coverPhotoFile.set(null);
+    this.coverPhotoPreview.set(null);
+  }
+
   save(event: Event): void {
     event.preventDefault();
     const author = this.session.user();
@@ -100,6 +124,8 @@ export class RecipeEditorPage {
       this.isSaving.set(true);
       try {
         const value = this.model();
+        const file = this.coverPhotoFile();
+        const coverPhotoPath = file ? await this.storageService.uploadCoverPhoto(file, author.uid) : null;
         const recipeId = await this.recipeService.createRecipe(
           {
             title: value.title.trim(),
@@ -118,7 +144,7 @@ export class RecipeEditorPage {
             servings: value.servings,
             prepTime: minutesToDuration(value.prepTimeMinutes),
             cookTime: minutesToDuration(value.cookTimeMinutes),
-            coverPhotoPath: null,
+            coverPhotoPath,
           },
           author,
         );
