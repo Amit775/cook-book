@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, resource, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { parseDurationToMinutes } from '../../core/models/duration.model';
@@ -11,7 +11,7 @@ import { RecipeCard } from '../../shared/recipe-card/recipe-card';
 
 @Component({
   selector: 'app-recipe-detail-page',
-  imports: [TranslocoDirective, RecipeCard],
+  imports: [TranslocoDirective, RouterLink, RecipeCard],
   template: `
     <section class="page" *transloco="let t">
       @if (recipeResource.isLoading()) {
@@ -40,7 +40,25 @@ import { RecipeCard } from '../../shared/recipe-card/recipe-card';
             <button type="button" class="button button--primary" [disabled]="isCloning()" (click)="clone(recipe)">
               {{ isCloning() ? t('recipeDetail.cloning') : t('actions.clone') }}
             </button>
+            @if (isOwner()) {
+              <a class="button" [routerLink]="['/recipes', recipe.recipeId, 'edit']">{{ t('actions.edit') }}</a>
+              <button type="button" class="button" (click)="requestDelete()">{{ t('actions.delete') }}</button>
+            }
           </div>
+
+          @if (confirmingDelete()) {
+            <div class="delete-confirm" role="alertdialog" aria-live="assertive">
+              <p>{{ t('recipeDetail.deleteConfirm') }}</p>
+              <div class="recipe-detail-actions">
+                <button type="button" class="button button--danger" [disabled]="isDeleting()" (click)="confirmDelete(recipe)">
+                  {{ isDeleting() ? t('recipeDetail.deleting') : t('actions.delete') }}
+                </button>
+                <button type="button" class="button" [disabled]="isDeleting()" (click)="cancelDelete()">
+                  {{ t('actions.cancel') }}
+                </button>
+              </div>
+            </div>
+          }
         }
 
         @if (recipe.description) {
@@ -88,10 +106,18 @@ export class RecipeDetailPage {
 
   protected readonly isSignedIn = this.session.isAuthenticated;
   protected readonly isCloning = signal(false);
+  protected readonly confirmingDelete = signal(false);
+  protected readonly isDeleting = signal(false);
 
   protected readonly recipeResource = resource({
     params: () => this.recipeId() || undefined,
     loader: ({ params }) => this.recipeService.getRecipe(params),
+  });
+
+  protected readonly isOwner = computed(() => {
+    const recipe = this.recipeResource.value();
+    const user = this.session.user();
+    return !!recipe && !!user && recipe.authorId === user.uid;
   });
 
   private readonly coverPhotoPath = computed(() => this.recipeResource.value()?.coverPhotoPath ?? undefined);
@@ -126,6 +152,24 @@ export class RecipeDetailPage {
       await this.router.navigateByUrl(`/recipes/${newRecipeId}`);
     } finally {
       this.isCloning.set(false);
+    }
+  }
+
+  requestDelete(): void {
+    this.confirmingDelete.set(true);
+  }
+
+  cancelDelete(): void {
+    this.confirmingDelete.set(false);
+  }
+
+  async confirmDelete(recipe: Recipe): Promise<void> {
+    this.isDeleting.set(true);
+    try {
+      await this.recipeService.deleteRecipe(recipe.recipeId);
+      await this.router.navigateByUrl('/library');
+    } finally {
+      this.isDeleting.set(false);
     }
   }
 }

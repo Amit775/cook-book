@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { User } from 'firebase/auth';
 import {
   collection,
+  deleteDoc,
   doc,
   DocumentData,
   getDoc,
@@ -10,6 +11,7 @@ import {
   serverTimestamp,
   setDoc,
   Timestamp,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 import { FIRESTORE } from '../firebase/firebase.providers';
@@ -109,6 +111,36 @@ export class RecipeService {
       updatedAt: serverTimestamp(),
     });
     return reference.id;
+  }
+
+  /**
+   * Update an existing recipe's editable fields (rebuilds `keywords`, bumps
+   * `updatedAt`). Never touches `authorId`/`rootId`/`parentId`/`createdAt`.
+   * Owner-only — enforced by the Firestore security rules.
+   */
+  async updateRecipe(recipeId: string, draft: RecipeDraft): Promise<void> {
+    const reference = doc(this.firestore, 'recipes', recipeId);
+    await updateDoc(reference, {
+      title: draft.title,
+      description: draft.description,
+      type: draft.type,
+      visibility: draft.visibility,
+      sharedWith: draft.sharedWith,
+      ingredients: draft.ingredients,
+      steps: draft.steps,
+      tags: draft.tags,
+      keywords: buildKeywords(draft),
+      servings: draft.servings,
+      prepTime: draft.prepTime,
+      cookTime: draft.cookTime,
+      coverPhotoPath: draft.coverPhotoPath,
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  /** Delete a recipe. Owner-only — enforced by the Firestore security rules. */
+  async deleteRecipe(recipeId: string): Promise<void> {
+    await deleteDoc(doc(this.firestore, 'recipes', recipeId));
   }
 }
 

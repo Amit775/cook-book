@@ -12,7 +12,10 @@
     "signIn": "התחברות",
     "signOut": "התנתקות",
     "remove": "הסרה",
-    "clone": "שכפול"
+    "clone": "שכפול",
+    "edit": "עריכה",
+    "delete": "מחיקה",
+    "cancel": "ביטול"
   },
   "common": {
     "signInRequired": "התחברו כדי להמשיך.",
@@ -61,6 +64,7 @@
     "choosePhoto": "בחירת תמונה",
     "removePhoto": "הסרת תמונה",
     "save": "שמירת מתכון",
+    "editHeading": "עריכת מתכון",
     "errors": {
       "titleRequired": "יש להזין כותרת (לפחות 2 תווים)",
       "ingredientNameRequired": "יש להזין שם מרכיב",
@@ -80,6 +84,8 @@
     "cookTime": "בישול",
     "otherVersions": "גרסאות אחרות",
     "cloning": "משכפל...",
+    "deleteConfirm": "למחוק את המתכון? לא ניתן לבטל.",
+    "deleting": "מוחק...",
     "notFound": "המתכון לא נמצא."
   },
   "login": {

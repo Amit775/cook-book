@@ -10,6 +10,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/recipes/recipe-editor-page').then((m) => m.RecipeEditorPage),
   },
   {
+    path: 'recipes/:recipeId/edit',
+    loadComponent: () => import('./features/recipes/recipe-editor-page').then((m) => m.RecipeEditorPage),
+  },
+  {
     path: 'recipes/:recipeId',
     loadComponent: () => import('./features/recipes/recipe-detail-page').then((m) => m.RecipeDetailPage),
   },

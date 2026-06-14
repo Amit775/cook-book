@@ -1,9 +1,11 @@
 <section class="page" *transloco="let t">
-  <h1>{{ t('create.heading') }}</h1>
+  <h1>{{ t(isEditMode() ? 'recipeEditor.editHeading' : 'create.heading') }}</h1>
 
   @if (!isSignedIn()) {
     <p>{{ t('common.signInRequired') }}</p>
     <a routerLink="/login" class="button button--primary">{{ t('actions.signIn') }}</a>
+  } @else if (isEditMode() && existingRecipe.isLoading()) {
+    <p>{{ t('common.loading') }}</p>
   } @else {
     <form class="recipe-form" (submit)="save($event)">
       <label class="field">
