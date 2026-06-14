@@ -320,3 +320,17 @@ h3 {
 .recipe-versions {
   margin-block-start: 2rem;
 }
+
+.button--danger {
+  background: var(--color-error);
+  border-color: var(--color-error);
+  color: #ffffff;
+}
+
+.delete-confirm {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}

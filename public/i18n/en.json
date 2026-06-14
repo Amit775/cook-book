@@ -12,7 +12,10 @@
     "signIn": "Sign in",
     "signOut": "Sign out",
     "remove": "Remove",
-    "clone": "Clone"
+    "clone": "Clone",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel"
   },
   "common": {
     "signInRequired": "Sign in to continue.",
@@ -61,6 +64,7 @@
     "choosePhoto": "Choose a photo",
     "removePhoto": "Remove photo",
     "save": "Save recipe",
+    "editHeading": "Edit recipe",
     "errors": {
       "titleRequired": "Enter a title (at least 2 characters)",
       "ingredientNameRequired": "Enter an ingredient name",
@@ -80,6 +84,8 @@
     "cookTime": "Cook",
     "otherVersions": "Other versions",
     "cloning": "Cloning...",
+    "deleteConfirm": "Delete this recipe? This can't be undone.",
+    "deleting": "Deleting...",
     "notFound": "Recipe not found."
   },
   "login": {
