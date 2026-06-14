@@ -32,6 +32,8 @@ export interface Recipe {
   cookTime: IsoDuration | null;
   /** Cloud Storage path of the cover photo, or `null`. */
   coverPhotoPath: string | null;
+  /** Secret token for the "anyone with the link" share URL, or `null` if no link. */
+  shareId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,4 +42,4 @@ export interface Recipe {
  * The author-editable fields of a recipe. `recipeId`, `authorId`, `rootId`,
  * `createdAt`, and `updatedAt` are assigned by the data layer, not the editor.
  */
-export type RecipeDraft = Omit<Recipe, 'recipeId' | 'authorId' | 'rootId' | 'createdAt' | 'updatedAt'>;
+export type RecipeDraft = Omit<Recipe, 'recipeId' | 'authorId' | 'rootId' | 'shareId' | 'createdAt' | 'updatedAt'>;

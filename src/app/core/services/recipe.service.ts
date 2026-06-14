@@ -1,6 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { User } from 'firebase/auth';
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -13,6 +15,7 @@ import {
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 import { FIRESTORE } from '../firebase/firebase.providers';
 import { Recipe, RecipeDraft } from '../models/recipe.model';
@@ -25,6 +28,7 @@ import { Recipe, RecipeDraft } from '../models/recipe.model';
 export class RecipeService {
   private readonly firestore = inject(FIRESTORE);
   private readonly recipesCollection = collection(this.firestore, 'recipes');
+  private readonly shareLinksCollection = collection(this.firestore, 'shareLinks');
 
   /** Create a brand-new (original) recipe owned by `author`. Returns the new id. */
   async createRecipe(draft: RecipeDraft, author: User): Promise<string> {
@@ -34,6 +38,7 @@ export class RecipeService {
       authorId: author.uid,
       rootId: reference.id,
       parentId: null,
+      shareId: null,
       keywords: buildKeywords(draft),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -57,6 +62,13 @@ export class RecipeService {
   async listPublicRecipes(): Promise<Recipe[]> {
     const publicQuery = query(this.recipesCollection, where('visibility', '==', 'public'));
     const snapshot = await getDocs(publicQuery);
+    return sortByUpdatedDescending(snapshot.docs.map((document) => toRecipe(document.id, document.data())));
+  }
+
+  /** Recipes explicitly shared with the user (`sharedWith` contains them), newest first. */
+  async listSharedWithMe(userId: string): Promise<Recipe[]> {
+    const sharedQuery = query(this.recipesCollection, where('sharedWith', 'array-contains', userId));
+    const snapshot = await getDocs(sharedQuery);
     return sortByUpdatedDescending(snapshot.docs.map((document) => toRecipe(document.id, document.data())));
   }
 
@@ -99,6 +111,7 @@ export class RecipeService {
       authorId: cloner.uid,
       rootId: source.rootId,
       parentId: source.recipeId,
+      shareId: null,
       ingredients: source.ingredients,
       steps: source.steps,
       tags: source.tags,
@@ -115,7 +128,7 @@ export class RecipeService {
 
   /**
    * Update an existing recipe's editable fields (rebuilds `keywords`, bumps
-   * `updatedAt`). Never touches `authorId`/`rootId`/`parentId`/`createdAt`.
+   * `updatedAt`). Never touches `authorId`/`rootId`/`parentId`/`shareId`/`createdAt`.
    * Owner-only — enforced by the Firestore security rules.
    */
   async updateRecipe(recipeId: string, draft: RecipeDraft): Promise<void> {
@@ -141,6 +154,53 @@ export class RecipeService {
   /** Delete a recipe. Owner-only — enforced by the Firestore security rules. */
   async deleteRecipe(recipeId: string): Promise<void> {
     await deleteDoc(doc(this.firestore, 'recipes', recipeId));
+  }
+
+  /**
+   * Create (or reuse) the "anyone with the link" share token for a recipe.
+   * Writes a `shareLinks/{shareId}` lookup doc and stamps `shareId` on the recipe.
+   * Owner-only. Returns the share token.
+   */
+  async createShareLink(recipe: Recipe): Promise<string> {
+    if (recipe.shareId) {
+      return recipe.shareId;
+    }
+    const shareLinkReference = doc(this.shareLinksCollection);
+    const shareId = shareLinkReference.id;
+    const batch = writeBatch(this.firestore);
+    batch.set(shareLinkReference, { recipeId: recipe.recipeId });
+    batch.update(doc(this.firestore, 'recipes', recipe.recipeId), { shareId, updatedAt: serverTimestamp() });
+    await batch.commit();
+    return shareId;
+  }
+
+  /** Revoke a recipe's share link (deletes the lookup doc, clears `shareId`). Owner-only. */
+  async removeShareLink(recipe: Recipe): Promise<void> {
+    if (!recipe.shareId) {
+      return;
+    }
+    const batch = writeBatch(this.firestore);
+    batch.delete(doc(this.firestore, 'shareLinks', recipe.shareId));
+    batch.update(doc(this.firestore, 'recipes', recipe.recipeId), { shareId: null, updatedAt: serverTimestamp() });
+    await batch.commit();
+  }
+
+  /** Resolve a share token to its recipe id, or `null` if the link is invalid. */
+  async findRecipeIdByShareId(shareId: string): Promise<string | null> {
+    const snapshot = await getDoc(doc(this.firestore, 'shareLinks', shareId));
+    return snapshot.exists() ? (snapshot.data()['recipeId'] as string) : null;
+  }
+
+  /** Add the visiting user to a recipe's `sharedWith` (they grant themselves access via the link). */
+  async joinSharedRecipe(recipeId: string, userId: string): Promise<void> {
+    const reference = doc(this.firestore, 'recipes', recipeId);
+    await updateDoc(reference, { sharedWith: arrayUnion(userId), updatedAt: serverTimestamp() });
+  }
+
+  /** Revoke a specific user's shared access (removes from `sharedWith`). Owner-only. */
+  async unshareWithUser(recipeId: string, userId: string): Promise<void> {
+    const reference = doc(this.firestore, 'recipes', recipeId);
+    await updateDoc(reference, { sharedWith: arrayRemove(userId), updatedAt: serverTimestamp() });
   }
 }
 
@@ -180,6 +240,7 @@ function toRecipe(recipeId: string, data: DocumentData): Recipe {
     prepTime: data['prepTime'] ?? null,
     cookTime: data['cookTime'] ?? null,
     coverPhotoPath: data['coverPhotoPath'] ?? null,
+    shareId: data['shareId'] ?? null,
     createdAt: toDate(data['createdAt']),
     updatedAt: toDate(data['updatedAt']),
   };

@@ -8,10 +8,11 @@ import { RecipeService } from '../../core/services/recipe.service';
 import { StorageService } from '../../core/services/storage.service';
 import { SessionStore } from '../../core/state/session.store';
 import { RecipeCard } from '../../shared/recipe-card/recipe-card';
+import { RecipeShare } from './recipe-share';
 
 @Component({
   selector: 'app-recipe-detail-page',
-  imports: [TranslocoDirective, RouterLink, RecipeCard],
+  imports: [TranslocoDirective, RouterLink, RecipeCard, RecipeShare],
   template: `
     <section class="page" *transloco="let t">
       @if (recipeResource.isLoading()) {
@@ -58,6 +59,10 @@ import { RecipeCard } from '../../shared/recipe-card/recipe-card';
                 </button>
               </div>
             </div>
+          }
+
+          @if (isOwner()) {
+            <app-recipe-share [recipe]="recipe" />
           }
         }
 
