@@ -10,23 +10,70 @@
   "actions": {
     "toggleLanguage": "English",
     "signIn": "התחברות",
-    "signOut": "התנתקות"
+    "signOut": "התנתקות",
+    "remove": "הסרה"
+  },
+  "common": {
+    "signInRequired": "התחברו כדי להמשיך.",
+    "loading": "טוען...",
+    "saving": "שומר..."
   },
   "home": {
     "heading": "ברוכים הבאים לספר המתכונים",
     "subheading": "צרו, שתפו ושכפלו מתכונים של מנות, קינוחים וקוקטיילים."
   },
+  "recipeType": {
+    "meal": "מנה",
+    "dessert": "קינוח",
+    "cocktail": "קוקטייל",
+    "other": "אחר"
+  },
+  "recipeVisibility": {
+    "private": "פרטי",
+    "unlisted": "עם קישור",
+    "shared": "משותף",
+    "public": "ציבורי"
+  },
   "create": {
-    "heading": "מתכון חדש",
-    "placeholder": "עורך המתכונים יגיע בשלב הבא."
+    "heading": "מתכון חדש"
+  },
+  "recipeEditor": {
+    "title": "כותרת",
+    "description": "תיאור",
+    "type": "סוג",
+    "visibility": "נראות",
+    "servings": "מספר מנות",
+    "prepTime": "זמן הכנה (דקות)",
+    "cookTime": "זמן בישול (דקות)",
+    "ingredients": "מרכיבים",
+    "ingredientQuantity": "כמות",
+    "ingredientUnit": "יחידה",
+    "ingredientName": "שם המרכיב",
+    "addIngredient": "הוספת מרכיב",
+    "steps": "שלבי הכנה",
+    "stepPlaceholder": "תארו את השלב",
+    "addStep": "הוספת שלב",
+    "tags": "תגיות (מופרדות בפסיק)",
+    "save": "שמירת מתכון",
+    "errors": {
+      "titleRequired": "יש להזין כותרת (לפחות 2 תווים)",
+      "ingredientNameRequired": "יש להזין שם מרכיב",
+      "stepRequired": "יש להזין תיאור לשלב"
+    }
   },
   "library": {
     "heading": "הספרייה שלי",
-    "placeholder": "כאן יוצגו המתכונים שלך, מה ששותף איתך והמועדפים."
+    "newRecipe": "מתכון חדש",
+    "empty": "עדיין אין מתכונים. צרו את הראשון!"
   },
   "recipeDetail": {
-    "placeholder": "תצוגת המתכון תגיע בשלב הבא.",
-    "otherVersions": "גרסאות אחרות"
+    "ingredients": "מרכיבים",
+    "steps": "שלבי הכנה",
+    "servings": "מנות",
+    "prepTime": "הכנה",
+    "cookTime": "בישול",
+    "otherVersions": "גרסאות אחרות",
+    "notFound": "המתכון לא נמצא."
   },
   "login": {
     "heading": "התחברות",

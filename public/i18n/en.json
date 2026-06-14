@@ -10,23 +10,70 @@
   "actions": {
     "toggleLanguage": "עברית",
     "signIn": "Sign in",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "remove": "Remove"
+  },
+  "common": {
+    "signInRequired": "Sign in to continue.",
+    "loading": "Loading...",
+    "saving": "Saving..."
   },
   "home": {
     "heading": "Welcome to the Cookbook",
     "subheading": "Create, share and clone recipes for meals, desserts and cocktails."
   },
+  "recipeType": {
+    "meal": "Meal",
+    "dessert": "Dessert",
+    "cocktail": "Cocktail",
+    "other": "Other"
+  },
+  "recipeVisibility": {
+    "private": "Private",
+    "unlisted": "Unlisted",
+    "shared": "Shared",
+    "public": "Public"
+  },
   "create": {
-    "heading": "New recipe",
-    "placeholder": "The recipe editor arrives in the next phase."
+    "heading": "New recipe"
+  },
+  "recipeEditor": {
+    "title": "Title",
+    "description": "Description",
+    "type": "Type",
+    "visibility": "Visibility",
+    "servings": "Servings",
+    "prepTime": "Prep time (minutes)",
+    "cookTime": "Cook time (minutes)",
+    "ingredients": "Ingredients",
+    "ingredientQuantity": "Quantity",
+    "ingredientUnit": "Unit",
+    "ingredientName": "Ingredient",
+    "addIngredient": "Add ingredient",
+    "steps": "Steps",
+    "stepPlaceholder": "Describe the step",
+    "addStep": "Add step",
+    "tags": "Tags (comma-separated)",
+    "save": "Save recipe",
+    "errors": {
+      "titleRequired": "Enter a title (at least 2 characters)",
+      "ingredientNameRequired": "Enter an ingredient name",
+      "stepRequired": "Enter a step description"
+    }
   },
   "library": {
     "heading": "My library",
-    "placeholder": "Your recipes, what's shared with you, and your favorites will appear here."
+    "newRecipe": "New recipe",
+    "empty": "No recipes yet. Create your first!"
   },
   "recipeDetail": {
-    "placeholder": "The recipe view arrives in the next phase.",
-    "otherVersions": "Other versions"
+    "ingredients": "Ingredients",
+    "steps": "Steps",
+    "servings": "servings",
+    "prepTime": "Prep",
+    "cookTime": "Cook",
+    "otherVersions": "Other versions",
+    "notFound": "Recipe not found."
   },
   "login": {
     "heading": "Sign in",

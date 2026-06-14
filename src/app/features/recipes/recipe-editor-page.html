@@ -1,0 +1,120 @@
+<section class="page" *transloco="let t">
+  <h1>{{ t('create.heading') }}</h1>
+
+  @if (!isSignedIn()) {
+    <p>{{ t('common.signInRequired') }}</p>
+    <a routerLink="/login" class="button button--primary">{{ t('actions.signIn') }}</a>
+  } @else {
+    <form class="recipe-form" (submit)="save($event)">
+      <label class="field">
+        <span class="field-label">{{ t('recipeEditor.title') }}</span>
+        <input type="text" [formField]="recipeForm.title" />
+      </label>
+      @if (recipeForm.title().touched() && recipeForm.title().invalid()) {
+        <p class="error">{{ t('recipeEditor.errors.titleRequired') }}</p>
+      }
+
+      <label class="field">
+        <span class="field-label">{{ t('recipeEditor.description') }}</span>
+        <textarea rows="3" [formField]="recipeForm.description"></textarea>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">{{ t('recipeEditor.type') }}</span>
+          <select [formField]="recipeForm.type">
+            @for (recipeType of recipeTypes; track recipeType) {
+              <option [value]="recipeType">{{ t('recipeType.' + recipeType) }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span class="field-label">{{ t('recipeEditor.visibility') }}</span>
+          <select [formField]="recipeForm.visibility">
+            @for (option of visibilities; track option) {
+              <option [value]="option">{{ t('recipeVisibility.' + option) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">{{ t('recipeEditor.servings') }}</span>
+          <input type="number" [formField]="recipeForm.servings" />
+        </label>
+        <label class="field">
+          <span class="field-label">{{ t('recipeEditor.prepTime') }}</span>
+          <input type="number" [formField]="recipeForm.prepTimeMinutes" />
+        </label>
+        <label class="field">
+          <span class="field-label">{{ t('recipeEditor.cookTime') }}</span>
+          <input type="number" [formField]="recipeForm.cookTimeMinutes" />
+        </label>
+      </div>
+
+      <fieldset class="field-group">
+        <legend>{{ t('recipeEditor.ingredients') }}</legend>
+        @for (ingredient of recipeForm.ingredients; track $index; let i = $index) {
+          <div class="ingredient-row">
+            <input
+              type="number"
+              [formField]="ingredient.quantity"
+              [placeholder]="t('recipeEditor.ingredientQuantity')"
+              [attr.aria-label]="t('recipeEditor.ingredientQuantity')"
+            />
+            <input
+              type="text"
+              [formField]="ingredient.unit"
+              [placeholder]="t('recipeEditor.ingredientUnit')"
+              [attr.aria-label]="t('recipeEditor.ingredientUnit')"
+            />
+            <input
+              type="text"
+              [formField]="ingredient.name"
+              [placeholder]="t('recipeEditor.ingredientName')"
+              [attr.aria-label]="t('recipeEditor.ingredientName')"
+            />
+            <button
+              type="button"
+              class="icon-button"
+              [attr.aria-label]="t('actions.remove')"
+              (click)="removeIngredient(i)"
+            >
+              ×
+            </button>
+          </div>
+        }
+        <button type="button" class="button" (click)="addIngredient()">{{ t('recipeEditor.addIngredient') }}</button>
+      </fieldset>
+
+      <fieldset class="field-group">
+        <legend>{{ t('recipeEditor.steps') }}</legend>
+        @for (step of recipeForm.steps; track $index; let i = $index) {
+          <div class="step-row">
+            <span class="step-number" aria-hidden="true">{{ i + 1 }}</span>
+            <input type="text" [formField]="step" [placeholder]="t('recipeEditor.stepPlaceholder')" />
+            <button
+              type="button"
+              class="icon-button"
+              [attr.aria-label]="t('actions.remove')"
+              (click)="removeStep(i)"
+            >
+              ×
+            </button>
+          </div>
+        }
+        <button type="button" class="button" (click)="addStep()">{{ t('recipeEditor.addStep') }}</button>
+      </fieldset>
+
+      <label class="field">
+        <span class="field-label">{{ t('recipeEditor.tags') }}</span>
+        <input type="text" [formField]="recipeForm.tagsText" />
+      </label>
+
+      <button type="submit" class="button button--primary" [disabled]="isSaving()">
+        {{ isSaving() ? t('common.saving') : t('recipeEditor.save') }}
+      </button>
+    </form>
+  }
+</section>
