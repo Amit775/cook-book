@@ -11,16 +11,18 @@
     "toggleLanguage": "English",
     "signIn": "התחברות",
     "signOut": "התנתקות",
-    "remove": "הסרה"
+    "remove": "הסרה",
+    "clone": "שכפול"
   },
   "common": {
     "signInRequired": "התחברו כדי להמשיך.",
     "loading": "טוען...",
     "saving": "שומר..."
   },
-  "home": {
+  "browse": {
     "heading": "ברוכים הבאים לספר המתכונים",
-    "subheading": "צרו, שתפו ושכפלו מתכונים של מנות, קינוחים וקוקטיילים."
+    "subheading": "צרו, שתפו ושכפלו מתכונים של מנות, קינוחים וקוקטיילים.",
+    "empty": "אין עדיין מתכונים ציבוריים."
   },
   "recipeType": {
     "meal": "מנה",
@@ -54,6 +56,10 @@
     "stepPlaceholder": "תארו את השלב",
     "addStep": "הוספת שלב",
     "tags": "תגיות (מופרדות בפסיק)",
+    "coverPhoto": "תמונת שער",
+    "coverPhotoAlt": "תצוגה מקדימה של תמונת השער",
+    "choosePhoto": "בחירת תמונה",
+    "removePhoto": "הסרת תמונה",
     "save": "שמירת מתכון",
     "errors": {
       "titleRequired": "יש להזין כותרת (לפחות 2 תווים)",
@@ -73,6 +79,7 @@
     "prepTime": "הכנה",
     "cookTime": "בישול",
     "otherVersions": "גרסאות אחרות",
+    "cloning": "משכפל...",
     "notFound": "המתכון לא נמצא."
   },
   "login": {

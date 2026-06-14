@@ -107,6 +107,25 @@
         <button type="button" class="button" (click)="addStep()">{{ t('recipeEditor.addStep') }}</button>
       </fieldset>
 
+      <fieldset class="field-group">
+        <legend>{{ t('recipeEditor.coverPhoto') }}</legend>
+        <div class="cover-uploader">
+          @if (coverPhotoPreview(); as preview) {
+            <img [src]="preview" [alt]="t('recipeEditor.coverPhotoAlt')" class="cover-preview" />
+            <button type="button" class="button" (click)="removeCoverPhoto()">
+              {{ t('recipeEditor.removePhoto') }}
+            </button>
+          } @else {
+            <input
+              type="file"
+              accept="image/*"
+              [attr.aria-label]="t('recipeEditor.choosePhoto')"
+              (change)="onCoverPhotoSelected($event)"
+            />
+          }
+        </div>
+      </fieldset>
+
       <label class="field">
         <span class="field-label">{{ t('recipeEditor.tags') }}</span>
         <input type="text" [formField]="recipeForm.tagsText" />

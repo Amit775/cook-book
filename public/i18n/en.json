@@ -11,16 +11,18 @@
     "toggleLanguage": "עברית",
     "signIn": "Sign in",
     "signOut": "Sign out",
-    "remove": "Remove"
+    "remove": "Remove",
+    "clone": "Clone"
   },
   "common": {
     "signInRequired": "Sign in to continue.",
     "loading": "Loading...",
     "saving": "Saving..."
   },
-  "home": {
+  "browse": {
     "heading": "Welcome to the Cookbook",
-    "subheading": "Create, share and clone recipes for meals, desserts and cocktails."
+    "subheading": "Create, share and clone recipes for meals, desserts and cocktails.",
+    "empty": "No public recipes yet."
   },
   "recipeType": {
     "meal": "Meal",
@@ -54,6 +56,10 @@
     "stepPlaceholder": "Describe the step",
     "addStep": "Add step",
     "tags": "Tags (comma-separated)",
+    "coverPhoto": "Cover photo",
+    "coverPhotoAlt": "Cover photo preview",
+    "choosePhoto": "Choose a photo",
+    "removePhoto": "Remove photo",
     "save": "Save recipe",
     "errors": {
       "titleRequired": "Enter a title (at least 2 characters)",
@@ -73,6 +79,7 @@
     "prepTime": "Prep",
     "cookTime": "Cook",
     "otherVersions": "Other versions",
+    "cloning": "Cloning...",
     "notFound": "Recipe not found."
   },
   "login": {
