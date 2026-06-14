@@ -74,7 +74,9 @@
   "library": {
     "heading": "הספרייה שלי",
     "newRecipe": "מתכון חדש",
-    "empty": "עדיין אין מתכונים. צרו את הראשון!"
+    "empty": "עדיין אין מתכונים. צרו את הראשון!",
+    "sharedWithMe": "משותף איתי",
+    "sharedEmpty": "עדיין לא שותפו איתך מתכונים."
   },
   "recipeDetail": {
     "ingredients": "מרכיבים",
@@ -87,6 +89,19 @@
     "deleteConfirm": "למחוק את המתכון? לא ניתן לבטל.",
     "deleting": "מוחק...",
     "notFound": "המתכון לא נמצא."
+  },
+  "share": {
+    "title": "שיתוף",
+    "emailLabel": "אימייל",
+    "emailPlaceholder": "name@example.com",
+    "add": "שיתוף",
+    "sharing": "משתף...",
+    "sharedWith": "משותף עם",
+    "noOne": "עדיין לא שותף עם אף אחד.",
+    "userNotFound": "לא נמצא משתמש עם האימייל הזה (עליו להתחבר לפחות פעם אחת).",
+    "cannotShareWithSelf": "אי אפשר לשתף עם עצמך.",
+    "alreadyShared": "כבר משותף עם המשתמש הזה.",
+    "failed": "השיתוף נכשל. נסו שוב."
   },
   "login": {
     "heading": "התחברות",

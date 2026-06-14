@@ -20,16 +20,33 @@ import { RecipeCard } from '../../shared/recipe-card/recipe-card';
       @if (!isSignedIn()) {
         <p>{{ t('common.signInRequired') }}</p>
         <a routerLink="/login" class="button">{{ t('actions.signIn') }}</a>
-      } @else if (recipesResource.isLoading()) {
-        <p>{{ t('common.loading') }}</p>
-      } @else if (recipesResource.value().length === 0) {
-        <p>{{ t('library.empty') }}</p>
       } @else {
-        <div class="recipe-grid">
-          @for (recipe of recipesResource.value(); track recipe.recipeId) {
-            <app-recipe-card [recipe]="recipe" />
+        @if (recipesResource.isLoading()) {
+          <p>{{ t('common.loading') }}</p>
+        } @else if (recipesResource.value().length === 0) {
+          <p>{{ t('library.empty') }}</p>
+        } @else {
+          <div class="recipe-grid">
+            @for (recipe of recipesResource.value(); track recipe.recipeId) {
+              <app-recipe-card [recipe]="recipe" />
+            }
+          </div>
+        }
+
+        <section class="shared-with-me">
+          <h2>{{ t('library.sharedWithMe') }}</h2>
+          @if (sharedResource.isLoading()) {
+            <p>{{ t('common.loading') }}</p>
+          } @else if (sharedResource.value().length === 0) {
+            <p>{{ t('library.sharedEmpty') }}</p>
+          } @else {
+            <div class="recipe-grid">
+              @for (recipe of sharedResource.value(); track recipe.recipeId) {
+                <app-recipe-card [recipe]="recipe" />
+              }
+            </div>
           }
-        </div>
+        </section>
       }
     </section>
   `,
@@ -44,5 +61,11 @@ export class LibraryPage {
     params: () => this.session.user()?.uid,
     defaultValue: [] as Recipe[],
     loader: ({ params }) => this.recipeService.listMyRecipes(params),
+  });
+
+  protected readonly sharedResource = resource({
+    params: () => this.session.user()?.uid,
+    defaultValue: [] as Recipe[],
+    loader: ({ params }) => this.recipeService.listSharedWithMe(params),
   });
 }

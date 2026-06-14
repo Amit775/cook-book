@@ -1,6 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { User } from 'firebase/auth';
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -141,6 +143,25 @@ export class RecipeService {
   /** Delete a recipe. Owner-only — enforced by the Firestore security rules. */
   async deleteRecipe(recipeId: string): Promise<void> {
     await deleteDoc(doc(this.firestore, 'recipes', recipeId));
+  }
+
+  /** Grant `userId` read access to a recipe (adds to `sharedWith`). Owner-only. */
+  async shareWithUser(recipeId: string, userId: string): Promise<void> {
+    const reference = doc(this.firestore, 'recipes', recipeId);
+    await updateDoc(reference, { sharedWith: arrayUnion(userId), updatedAt: serverTimestamp() });
+  }
+
+  /** Revoke `userId`'s access to a recipe (removes from `sharedWith`). Owner-only. */
+  async unshareWithUser(recipeId: string, userId: string): Promise<void> {
+    const reference = doc(this.firestore, 'recipes', recipeId);
+    await updateDoc(reference, { sharedWith: arrayRemove(userId), updatedAt: serverTimestamp() });
+  }
+
+  /** Recipes explicitly shared with the user (`sharedWith` contains them), newest first. */
+  async listSharedWithMe(userId: string): Promise<Recipe[]> {
+    const sharedQuery = query(this.recipesCollection, where('sharedWith', 'array-contains', userId));
+    const snapshot = await getDocs(sharedQuery);
+    return sortByUpdatedDescending(snapshot.docs.map((document) => toRecipe(document.id, document.data())));
   }
 }
 

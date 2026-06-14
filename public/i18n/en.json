@@ -74,7 +74,9 @@
   "library": {
     "heading": "My library",
     "newRecipe": "New recipe",
-    "empty": "No recipes yet. Create your first!"
+    "empty": "No recipes yet. Create your first!",
+    "sharedWithMe": "Shared with me",
+    "sharedEmpty": "No recipes shared with you yet."
   },
   "recipeDetail": {
     "ingredients": "Ingredients",
@@ -87,6 +89,19 @@
     "deleteConfirm": "Delete this recipe? This can't be undone.",
     "deleting": "Deleting...",
     "notFound": "Recipe not found."
+  },
+  "share": {
+    "title": "Share",
+    "emailLabel": "Email",
+    "emailPlaceholder": "name@example.com",
+    "add": "Share",
+    "sharing": "Sharing...",
+    "sharedWith": "Shared with",
+    "noOne": "Not shared with anyone yet.",
+    "userNotFound": "No user found with that email (they need to have signed in at least once).",
+    "cannotShareWithSelf": "You can't share with yourself.",
+    "alreadyShared": "Already shared with this user.",
+    "failed": "Sharing failed. Please try again."
   },
   "login": {
     "heading": "Sign in",
