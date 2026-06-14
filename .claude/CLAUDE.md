@@ -58,6 +58,8 @@ This is a recipe-sharing app (meals, desserts, cocktails) with clone-based versi
 
 - **Naming:** never abbreviate variable/field names — `quantity` not `qty`, `prepTime`/`cookTime` not `prepMin`/`cookMin`, `userId` not `uid`. Acronyms like `URL`/`ID` are fine.
 - **Forms:** use Angular v22 **Signal Forms** for the recipe editor (not Reactive/Template forms).
+- **State management:** **`@ngrx/signals`** (SignalStore). Global/shared state goes in a store under `src/app/core/state/` (see `SessionStore`); keep Firebase side effects in stateless services (e.g. `AuthService`). On v21 + `legacy-peer-deps=true` until NgRx publishes v22.
+- **Static assets:** do NOT keep a `public/index.html` — Angular generates the shell from `src/index.html`, and a file at `public/index.html` shadows it (a stray one from `firebase init hosting` will break the app).
 - **Firebase:** use the official modular SDK (`firebase@12`) directly via the DI tokens in `src/app/core/firebase/firebase.providers.ts` (`FIREBASE_AUTH`, `FIRESTORE`, `FIREBASE_STORAGE`). Do NOT add `@angular/fire` — it does not support Angular v22 yet.
 - **Durations:** `prepTime`/`cookTime` are ISO 8601 duration strings (e.g. `PT30M`). Helpers in `src/app/core/models/duration.model.ts`.
 - **i18n / RTL:** Hebrew-first, RTL by default. Use Transloco (`*transloco="let t"`) for all user-facing text — add keys to both `public/i18n/he.json` and `public/i18n/en.json`. Use CSS **logical properties** (`margin-inline`, `padding-inline`, `inset-inline`) so layout flips automatically; never hard-code left/right.
@@ -65,3 +67,10 @@ This is a recipe-sharing app (meals, desserts, cocktails) with clone-based versi
 - **Sharing model:** clone-only — shared users can view and clone, never co-edit. A clone is a new owned doc linked by `parentId` + `rootId`.
 - **Structure:** `core/` (models, services, firebase, i18n), `features/` (lazy-loaded route pages), `shared/` (reusable UI). Feature routes are lazy via `loadComponent`.
 - **Security:** Firestore/Storage rules at repo root are the real access boundary — keep them in sync with any new query shapes (queries must filter to what the rules allow, or the whole query is rejected).
+
+## Workflow
+
+- **Branch per phase:** do each phase's work on a feature branch off `main` (e.g. `feature/phase-1-recipes`). Never commit phase work directly to `main`.
+- **PR to main:** open a pull request to `main` for each phase.
+- **Preview before merge:** deploy a Firebase Hosting **preview channel** for the PR (`firebase hosting:channel:deploy <channel>`) and share the preview URL. Wait for the user's explicit approval before merging.
+- `main` is the deployable baseline (what's on the live hosting channel); only merge after approval.

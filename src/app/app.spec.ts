@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -6,12 +7,12 @@ import { provideTransloco } from '@jsverse/transloco';
 
 import { App } from './app';
 import { TranslationLoader } from './core/i18n/transloco-loader';
-import { AuthService } from './core/services/auth.service';
+import { SessionStore } from './core/state/session.store';
 
-class AuthServiceStub {
-  readonly isAuthenticated = () => false;
-  signOut = () => Promise.resolve();
-}
+const sessionStoreStub = {
+  isAuthenticated: signal(false),
+  signOut: () => Promise.resolve(),
+};
 
 describe('App', () => {
   beforeEach(async () => {
@@ -25,7 +26,7 @@ describe('App', () => {
           config: { availableLangs: ['he', 'en'], defaultLang: 'he' },
           loader: TranslationLoader,
         }),
-        { provide: AuthService, useClass: AuthServiceStub },
+        { provide: SessionStore, useValue: sessionStoreStub },
       ],
     }).compileComponents();
   });

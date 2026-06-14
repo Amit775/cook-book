@@ -13,8 +13,8 @@
         {{ t('actions.toggleLanguage') }}
       </button>
 
-      @if (authService.isAuthenticated()) {
-        <button type="button" class="link-button" (click)="authService.signOut()">{{ t('actions.signOut') }}</button>
+      @if (session.isAuthenticated()) {
+        <button type="button" class="link-button" (click)="session.signOut()">{{ t('actions.signOut') }}</button>
       } @else {
         <a routerLink="/login" class="link-button">{{ t('actions.signIn') }}</a>
       }

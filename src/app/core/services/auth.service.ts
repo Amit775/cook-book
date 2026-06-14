@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   ConfirmationResult,
   GoogleAuthProvider,
@@ -12,18 +12,17 @@ import {
 import { FIREBASE_AUTH } from '../firebase/firebase.providers';
 
 /**
- * Wraps Firebase Authentication and exposes the current user as a signal.
- * Supported sign-in methods: Google and Phone.
+ * Stateless wrapper around Firebase Authentication. Holds no UI state itself —
+ * the current user/session state lives in `SessionStore`. Supported sign-in
+ * methods: Google and Phone.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly auth = inject(FIREBASE_AUTH);
 
-  readonly currentUser = signal<User | null>(this.auth.currentUser);
-  readonly isAuthenticated = computed(() => this.currentUser() !== null);
-
-  constructor() {
-    onAuthStateChanged(this.auth, (user) => this.currentUser.set(user));
+  /** Subscribe to auth state changes. Returns the unsubscribe function. */
+  onAuthStateChanged(callback: (user: User | null) => void): () => void {
+    return onAuthStateChanged(this.auth, callback);
   }
 
   signInWithGoogle(): Promise<void> {
@@ -31,14 +30,20 @@ export class AuthService {
   }
 
   /**
-   * Begin phone sign-in. The returned `ConfirmationResult` is used to confirm
-   * the SMS code the user receives. Requires a reCAPTCHA verifier (see
-   * `createRecaptchaVerifier`). The full code-entry UI lands in Phase 1.
+   * Begin phone sign-in. Sends an SMS to `phoneNumber` (E.164, e.g. +972501234567)
+   * and resolves with a `ConfirmationResult` used to confirm the received code.
+   * Requires a reCAPTCHA verifier (see `createRecaptchaVerifier`).
    */
   startPhoneSignIn(phoneNumber: string, verifier: RecaptchaVerifier): Promise<ConfirmationResult> {
     return signInWithPhoneNumber(this.auth, phoneNumber, verifier);
   }
 
+  /** Confirm the SMS code for a pending phone sign-in, completing the sign-in. */
+  confirmPhoneCode(confirmationResult: ConfirmationResult, code: string): Promise<void> {
+    return confirmationResult.confirm(code).then(() => undefined);
+  }
+
+  /** Create an invisible reCAPTCHA verifier bound to the element with the given id. */
   createRecaptchaVerifier(containerId: string): RecaptchaVerifier {
     return new RecaptchaVerifier(this.auth, containerId, { size: 'invisible' });
   }

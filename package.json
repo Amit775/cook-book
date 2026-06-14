@@ -20,6 +20,7 @@
     "@angular/router": "^22.0.0",
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "@jsverse/transloco": "^8.4.0",
+    "@ngrx/signals": "^21.1.1",
     "firebase": "^12.14.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"

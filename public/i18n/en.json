@@ -31,6 +31,20 @@
   "login": {
     "heading": "Sign in",
     "google": "Continue with Google",
-    "phone": "Continue with phone (coming soon)"
+    "or": "or",
+    "phoneNumberLabel": "Phone number",
+    "phoneNumberPlaceholder": "+972 50 123 4567",
+    "phoneHint": "Enter your number in international format, e.g. +972501234567",
+    "sendCode": "Send code",
+    "sending": "Sending...",
+    "codeLabel": "Verification code",
+    "codePlaceholder": "123456",
+    "codeSentTo": "Code sent to {{phoneNumber}}",
+    "verify": "Verify & sign in",
+    "verifying": "Verifying...",
+    "changeNumber": "Change number",
+    "errorGoogleFailed": "Google sign-in failed. Please try again.",
+    "errorSendFailed": "Couldn't send the code. Check the number and try again.",
+    "errorVerifyFailed": "Verification failed. Check the code and try again."
   }
 }

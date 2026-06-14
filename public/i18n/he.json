@@ -31,6 +31,20 @@
   "login": {
     "heading": "התחברות",
     "google": "המשך עם Google",
-    "phone": "המשך עם טלפון (בקרוב)"
+    "or": "או",
+    "phoneNumberLabel": "מספר טלפון",
+    "phoneNumberPlaceholder": "+972 50 123 4567",
+    "phoneHint": "הזינו מספר בפורמט בינלאומי, למשל +972501234567",
+    "sendCode": "שליחת קוד",
+    "sending": "שולח...",
+    "codeLabel": "קוד אימות",
+    "codePlaceholder": "123456",
+    "codeSentTo": "קוד נשלח אל {{phoneNumber}}",
+    "verify": "אימות והתחברות",
+    "verifying": "מאמת...",
+    "changeNumber": "שינוי מספר",
+    "errorGoogleFailed": "ההתחברות עם Google נכשלה. נסו שוב.",
+    "errorSendFailed": "שליחת הקוד נכשלה. בדקו את המספר ונסו שוב.",
+    "errorVerifyFailed": "האימות נכשל. בדקו את הקוד ונסו שוב."
   }
 }
