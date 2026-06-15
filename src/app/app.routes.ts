@@ -25,5 +25,9 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () => import('./features/auth/login-page').then((m) => m.LoginPage),
   },
+  {
+    path: 'share/:shareId',
+    loadComponent: () => import('./features/recipes/join-share-page').then((m) => m.JoinSharePage),
+  },
   { path: '**', redirectTo: '' },
 ];

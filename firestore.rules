@@ -24,7 +24,24 @@ service cloud.firestore {
       }
     }
 
-    // Recipes. Read access depends on visibility; writes are author-only.
+    // Share links: an unguessable token -> recipe id, for "anyone with the link".
+    // Readable only by exact id (get), never enumerable (list). The owner of the
+    // target recipe manages them.
+    match /shareLinks/{shareId} {
+      function ownsTargetRecipe(recipeId) {
+        return isSignedIn()
+          && get(/databases/$(database)/documents/recipes/$(recipeId)).data.authorId == request.auth.uid;
+      }
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if ownsTargetRecipe(request.resource.data.recipeId);
+      allow delete: if ownsTargetRecipe(resource.data.recipeId);
+      allow update: if false;
+    }
+
+    // Recipes. Read access depends on visibility; writes are author-only, except
+    // a signed-in visitor may add ONLY themselves to `sharedWith` (joining via a
+    // share link).
     // NOTE: Firestore evaluates rules per document. List/collection queries must
     // include filters (e.g. visibility == 'public', or sharedWith contains uid)
     // that match these conditions, otherwise the whole query is rejected.
@@ -40,9 +57,22 @@ service cloud.firestore {
              ));
       }
 
+      // A non-owner may only add their own uid to `sharedWith` (and bump updatedAt),
+      // changing nothing else.
+      function isSelfJoin() {
+        let added = request.resource.data.sharedWith;
+        let existing = resource.data.sharedWith;
+        return isSignedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedWith', 'updatedAt'])
+          && !(request.auth.uid in existing)
+          && added.hasAll(existing)
+          && added.hasOnly(existing.concat([request.auth.uid]));
+      }
+
       allow read: if canReadRecipe();
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.authorId);
+      allow update: if isOwner(resource.data.authorId) || isSelfJoin();
+      allow delete: if isOwner(resource.data.authorId);
 
       // Comments are public-readable; authored and editable only by their author.
       match /comments/{commentId} {

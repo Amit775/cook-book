@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { User } from 'firebase/auth';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, DocumentData, getDoc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore';
 import { FIRESTORE } from '../firebase/firebase.providers';
+import { UserProfile } from '../models/user-profile.model';
 
 /**
  * Reads and writes user profile documents under `users/{userId}`.
@@ -28,4 +29,20 @@ export class UserProfileService {
       createdAt: serverTimestamp(),
     });
   }
+
+  /** Read a single profile, used to show who a recipe is shared with. */
+  async getProfile(userId: string): Promise<UserProfile | null> {
+    const snapshot = await getDoc(doc(this.firestore, 'users', userId));
+    return snapshot.exists() ? toProfile(snapshot.id, snapshot.data()) : null;
+  }
+}
+
+function toProfile(userId: string, data: DocumentData): UserProfile {
+  return {
+    userId,
+    displayName: data['displayName'] ?? '',
+    photoUrl: data['photoUrl'] ?? null,
+    phoneNumber: data['phoneNumber'] ?? null,
+    createdAt: data['createdAt'] instanceof Timestamp ? data['createdAt'].toDate() : new Date(),
+  };
 }

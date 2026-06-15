@@ -300,3 +300,78 @@ h3 {
   border-radius: var(--radius);
   background: var(--color-surface);
 }
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.link-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.recipe-share {
+  margin-block: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.share-hint {
+  margin-block: 0 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.share-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-end: 0.5rem;
+}
+
+.share-link-input {
+  flex: 1;
+  min-inline-size: 12rem;
+  padding-block: 0.55rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.share-subtitle {
+  margin-block: 1.25rem 0.5rem;
+  font-size: 1rem;
+}
+
+.share-empty {
+  color: var(--color-text-muted);
+}
+
+.share-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.share-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shared-with-me {
+  margin-block-start: 2.5rem;
+}

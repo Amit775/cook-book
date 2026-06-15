@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 
@@ -32,6 +32,9 @@ export class LoginPage {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
+  /** Internal path to return to after sign-in (e.g. a /share/:id link), bound from `?redirect=`. */
+  readonly redirect = input<string>('');
+
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
@@ -40,7 +43,7 @@ export class LoginPage {
     this.isSubmitting.set(true);
     try {
       await this.authService.signInWithGoogle();
-      await this.router.navigateByUrl('/');
+      await this.router.navigateByUrl(this.redirectTarget());
     } catch (error) {
       const code = (error as { code?: string }).code ?? 'unknown';
       console.error('[sign-in] Google sign-in failed:', code, error);
@@ -48,5 +51,11 @@ export class LoginPage {
     } finally {
       this.isSubmitting.set(false);
     }
+  }
+
+  /** Only allow returning to internal paths (defends against open-redirects). */
+  private redirectTarget(): string {
+    const target = this.redirect();
+    return target.startsWith('/') ? target : '/';
   }
 }

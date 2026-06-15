@@ -74,7 +74,9 @@
   "library": {
     "heading": "My library",
     "newRecipe": "New recipe",
-    "empty": "No recipes yet. Create your first!"
+    "empty": "No recipes yet. Create your first!",
+    "sharedWithMe": "Shared with me",
+    "sharedEmpty": "No recipes shared with you yet."
   },
   "recipeDetail": {
     "ingredients": "Ingredients",
@@ -87,6 +89,20 @@
     "deleteConfirm": "Delete this recipe? This can't be undone.",
     "deleting": "Deleting...",
     "notFound": "Recipe not found."
+  },
+  "share": {
+    "title": "Share",
+    "linkHint": "Anyone with this link can view and clone this recipe (you can revoke it anytime).",
+    "createHint": "Create a link to share this recipe.",
+    "createLink": "Create share link",
+    "removeLink": "Revoke link",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "peopleWithAccess": "People with access",
+    "noOne": "No one else has access yet.",
+    "joining": "Adding you to the recipe…",
+    "linkInvalid": "This share link is invalid or has been revoked.",
+    "joinFailed": "Couldn't open the shared recipe. Please try again."
   },
   "login": {
     "heading": "Sign in",
