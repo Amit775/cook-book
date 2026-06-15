@@ -65,12 +65,16 @@
               [placeholder]="t('recipeEditor.ingredientQuantity')"
               [attr.aria-label]="t('recipeEditor.ingredientQuantity')"
             />
-            <input
-              type="text"
+            <select
+              class="ingredient-unit"
               [formField]="ingredient.unit"
-              [placeholder]="t('recipeEditor.ingredientUnit')"
               [attr.aria-label]="t('recipeEditor.ingredientUnit')"
-            />
+            >
+              <option value="">{{ t('recipeEditor.selectUnit') }}</option>
+              @for (unit of units; track unit) {
+                <option [value]="unit">{{ t('unit.' + unit) }}</option>
+              }
+            </select>
             <input
               type="text"
               [formField]="ingredient.name"

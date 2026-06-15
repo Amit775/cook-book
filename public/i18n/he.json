@@ -39,6 +39,19 @@
     "shared": "משותף",
     "public": "ציבורי"
   },
+  "unit": {
+    "gram": "גרם",
+    "kilogram": "ק\"ג",
+    "milliliter": "מ\"ל",
+    "liter": "ליטר",
+    "cup": "כוס",
+    "tablespoon": "כף",
+    "teaspoon": "כפית",
+    "piece": "יחידה",
+    "pinch": "קמצוץ",
+    "package": "חבילה",
+    "toTaste": "לפי הטעם"
+  },
   "create": {
     "heading": "מתכון חדש"
   },
@@ -53,6 +66,7 @@
     "ingredients": "מרכיבים",
     "ingredientQuantity": "כמות",
     "ingredientUnit": "יחידה",
+    "selectUnit": "בחרו יחידה",
     "ingredientName": "שם המרכיב",
     "addIngredient": "הוספת מרכיב",
     "steps": "שלבי הכנה",
@@ -82,6 +96,9 @@
     "ingredients": "מרכיבים",
     "steps": "שלבי הכנה",
     "servings": "מנות",
+    "adjustServings": "כוונון מספר מנות",
+    "fewerServings": "פחות מנות",
+    "moreServings": "יותר מנות",
     "prepTime": "הכנה",
     "cookTime": "בישול",
     "otherVersions": "גרסאות אחרות",

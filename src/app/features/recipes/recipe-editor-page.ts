@@ -7,6 +7,7 @@ import { minutesToDuration, parseDurationToMinutes } from '../../core/models/dur
 import { Ingredient } from '../../core/models/ingredient.model';
 import { Recipe, RecipeDraft } from '../../core/models/recipe.model';
 import { RECIPE_TYPES, RecipeType } from '../../core/models/recipe-type.model';
+import { RECIPE_UNITS } from '../../core/models/recipe-unit.model';
 import { RECIPE_VISIBILITIES, RecipeVisibility } from '../../core/models/recipe-visibility.model';
 import { RecipeService } from '../../core/services/recipe.service';
 import { StorageService } from '../../core/services/storage.service';
@@ -75,6 +76,7 @@ export class RecipeEditorPage {
 
   protected readonly recipeTypes = RECIPE_TYPES;
   protected readonly visibilities = RECIPE_VISIBILITIES;
+  protected readonly units = RECIPE_UNITS;
   protected readonly isSignedIn = this.session.isAuthenticated;
   protected readonly isSaving = signal(false);
   protected readonly coverPhotoFile = signal<File | null>(null);

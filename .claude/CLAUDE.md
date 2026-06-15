@@ -72,5 +72,6 @@ This is a recipe-sharing app (meals, desserts, cocktails) with clone-based versi
 
 - **Branch per phase:** do each phase's work on a feature branch off `main` (e.g. `feature/phase-1-recipes`). Never commit phase work directly to `main`.
 - **PR to main:** open a pull request to `main` for each phase.
-- **Preview before merge:** deploy a Firebase Hosting **preview channel** for the PR (`firebase hosting:channel:deploy <channel>`) and share the preview URL. Wait for the user's explicit approval before merging.
-- `main` is the deployable baseline (what's on the live hosting channel); only merge after approval.
+- **CI preview:** opening a PR auto-builds it and deploys a Firebase Hosting preview channel (no manual deploy needed).
+- **Merge & deploy autonomously:** the user delegated merge/deploy authority (2026-06-14) — when a change is verified and confidence is high, merge to `main` (CI deploys hosting to live) and deploy any Firestore/Storage rules yourself (`firebase deploy --only firestore:rules,storage`; CI does not deploy rules). No need to wait for approval; surface genuine uncertainties instead of guessing.
+- `main` is the deployable baseline (what's on the live hosting channel).

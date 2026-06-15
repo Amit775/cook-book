@@ -1,9 +1,11 @@
-import { Component, computed, inject, input, resource, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, resource, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { parseDurationToMinutes } from '../../core/models/duration.model';
+import { formatQuantity, scaleQuantity } from '../../core/models/quantity.model';
 import { Recipe } from '../../core/models/recipe.model';
+import { isRecipeUnit } from '../../core/models/recipe-unit.model';
 import { RecipeService } from '../../core/services/recipe.service';
 import { StorageService } from '../../core/services/storage.service';
 import { SessionStore } from '../../core/state/session.store';
@@ -25,9 +27,6 @@ import { RecipeShare } from './recipe-share';
         <h1>{{ recipe.title }}</h1>
         <p class="recipe-meta">
           <span>{{ t('recipeType.' + recipe.type) }}</span>
-          @if (recipe.servings) {
-            <span>· {{ recipe.servings }} {{ t('recipeDetail.servings') }}</span>
-          }
           @if (toMinutes(recipe.prepTime); as minutes) {
             <span>· {{ t('recipeDetail.prepTime') }} {{ minutes }}′</span>
           }
@@ -70,10 +69,39 @@ import { RecipeShare } from './recipe-share';
           <p>{{ recipe.description }}</p>
         }
 
-        <h2>{{ t('recipeDetail.ingredients') }}</h2>
-        <ul>
+        <div class="ingredients-header">
+          <h2>{{ t('recipeDetail.ingredients') }}</h2>
+          @if (recipe.servings) {
+            <div class="servings-stepper" role="group" [attr.aria-label]="t('recipeDetail.adjustServings')">
+              <button
+                type="button"
+                class="icon-button"
+                [attr.aria-label]="t('recipeDetail.fewerServings')"
+                (click)="decreaseServings()"
+              >
+                −
+              </button>
+              <span class="servings-value">{{ targetServings() }} {{ t('recipeDetail.servings') }}</span>
+              <button
+                type="button"
+                class="icon-button"
+                [attr.aria-label]="t('recipeDetail.moreServings')"
+                (click)="increaseServings()"
+              >
+                +
+              </button>
+            </div>
+          }
+        </div>
+        <ul class="ingredient-list">
           @for (ingredient of recipe.ingredients; track $index) {
-            <li>{{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}</li>
+            <li>
+              <span class="ingredient-amount">
+                {{ scaledQuantity(ingredient.quantity) }}
+                {{ isKnownUnit(ingredient.unit) ? t('unit.' + ingredient.unit) : ingredient.unit }}
+              </span>
+              {{ ingredient.name }}
+            </li>
           }
         </ul>
 
@@ -124,6 +152,27 @@ export class RecipeDetailPage {
     const user = this.session.user();
     return !!recipe && !!user && recipe.authorId === user.uid;
   });
+
+  /** Target serving count for the scaler; defaults to the recipe's own servings. */
+  protected readonly targetServings = linkedSignal(() => this.recipeResource.value()?.servings ?? null);
+  private readonly scaleFactor = computed(() => {
+    const base = this.recipeResource.value()?.servings ?? null;
+    const target = this.targetServings();
+    return base && target ? target / base : 1;
+  });
+  protected readonly isKnownUnit = isRecipeUnit;
+
+  increaseServings(): void {
+    this.targetServings.update((value) => (value ?? 1) + 1);
+  }
+
+  decreaseServings(): void {
+    this.targetServings.update((value) => Math.max(1, (value ?? 1) - 1));
+  }
+
+  scaledQuantity(quantity: number | null): string {
+    return formatQuantity(scaleQuantity(quantity, this.scaleFactor()));
+  }
 
   private readonly coverPhotoPath = computed(() => this.recipeResource.value()?.coverPhotoPath ?? undefined);
   protected readonly coverPhotoUrl = resource({
