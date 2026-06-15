@@ -70,6 +70,7 @@ This is a recipe-sharing app (meals, desserts, cocktails) with clone-based versi
 
 ## Workflow
 
+- **Delivery pipeline:** non-trivial tasks run through the agent pipeline in [`AGENTS.md`](../AGENTS.md) — **Planner → (plan-approval gate) → Implementer + PR → Reviewer → resolve loop → (pre-merge gate) → merge**. Roles are defined in `.claude/agents/` (`planner`, `implementer`, `reviewer`). This section holds the underlying git/CI/deploy facts those agents rely on.
 - **Branch per phase:** do each phase's work on a feature branch off `main` (e.g. `feature/phase-1-recipes`). Never commit phase work directly to `main`.
 - **PR to main:** open a pull request to `main` for each phase.
 - **CI preview:** opening a PR auto-builds it and deploys a Firebase Hosting preview channel (no manual deploy needed).
