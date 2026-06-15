@@ -417,3 +417,96 @@ h3 {
 .ingredient-amount {
   font-weight: 600;
 }
+
+.cook-button {
+  text-decoration: none;
+}
+
+.cooking-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow-y: auto;
+  background: var(--color-bg);
+  padding: 1.25rem;
+}
+
+.cooking-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-block-end: 1.5rem;
+}
+
+.cooking-exit {
+  text-decoration: none;
+}
+
+.cooking-title {
+  flex: 1;
+  min-inline-size: 8rem;
+  margin: 0;
+}
+
+.cooking-section {
+  margin-block-end: 2rem;
+}
+
+.check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.check-item label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.check-item input[type='checkbox'] {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  accent-color: var(--color-accent);
+}
+
+.check-item.is-checked label {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.cooking-step-progress {
+  color: var(--color-text-muted);
+  margin-block: 0 0.5rem;
+}
+
+.cooking-step-text {
+  font-size: 1.35rem;
+  line-height: 1.5;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  margin-block: 0 1rem;
+}
+
+.cooking-step-text.is-checked {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.cooking-step-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

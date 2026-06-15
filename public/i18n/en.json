@@ -107,6 +107,15 @@
     "deleting": "Deleting...",
     "notFound": "Recipe not found."
   },
+  "cooking": {
+    "start": "Cook",
+    "exit": "Exit",
+    "stepProgress": "Step {{current}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next",
+    "markDone": "Mark done",
+    "markUndone": "Mark not done"
+  },
   "share": {
     "title": "Share",
     "linkHint": "Anyone with this link can view and clone this recipe (you can revoke it anytime).",

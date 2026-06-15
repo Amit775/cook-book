@@ -107,6 +107,15 @@
     "deleting": "מוחק...",
     "notFound": "המתכון לא נמצא."
   },
+  "cooking": {
+    "start": "מצב בישול",
+    "exit": "יציאה",
+    "stepProgress": "שלב {{current}} מתוך {{total}}",
+    "previous": "הקודם",
+    "next": "הבא",
+    "markDone": "סמן כבוצע",
+    "markUndone": "בטל סימון"
+  },
   "share": {
     "title": "שיתוף",
     "linkHint": "כל מי שיש לו את הקישור יכול לצפות ולשכפל את המתכון (אפשר לבטל בכל עת).",

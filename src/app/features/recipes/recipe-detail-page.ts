@@ -35,6 +35,16 @@ import { RecipeShare } from './recipe-share';
           }
         </p>
 
+        <div class="recipe-detail-actions">
+          <a
+            class="button button--primary cook-button"
+            [routerLink]="['/recipes', recipe.recipeId, 'cook']"
+            [queryParams]="{ servings: targetServings() }"
+          >
+            {{ t('cooking.start') }}
+          </a>
+        </div>
+
         @if (isSignedIn()) {
           <div class="recipe-detail-actions">
             <button type="button" class="button button--primary" [disabled]="isCloning()" (click)="clone(recipe)">
