@@ -116,7 +116,13 @@
     "previous": "Previous",
     "next": "Next",
     "markDone": "Mark done",
-    "markUndone": "Mark not done"
+    "markUndone": "Mark not done",
+    "startTimer": "Start timer · {{label}}",
+    "timerDone": "Time's up!",
+    "timerPause": "Pause",
+    "timerResume": "Resume",
+    "timerReset": "Reset",
+    "timerDismiss": "Dismiss"
   },
   "share": {
     "title": "Share",
