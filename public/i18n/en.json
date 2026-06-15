@@ -68,6 +68,8 @@
     "ingredientUnit": "Unit",
     "selectUnit": "Select unit",
     "ingredientName": "Ingredient",
+    "ingredientSuggestions": "Ingredient suggestions",
+    "addNewIngredient": "Add “{{name}}”",
     "addIngredient": "Add ingredient",
     "steps": "Steps",
     "stepPlaceholder": "Describe the step",

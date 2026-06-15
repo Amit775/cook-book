@@ -75,11 +75,12 @@
                 <option [value]="unit">{{ t('unit.' + unit) }}</option>
               }
             </select>
-            <input
-              type="text"
-              [formField]="ingredient.name"
+            <app-ingredient-combobox
+              class="ingredient-name"
+              [value]="ingredientName(i)"
               [placeholder]="t('recipeEditor.ingredientName')"
-              [attr.aria-label]="t('recipeEditor.ingredientName')"
+              [ariaLabel]="t('recipeEditor.ingredientName')"
+              (selectionChange)="onIngredientSelected(i, $event)"
             />
             <button
               type="button"

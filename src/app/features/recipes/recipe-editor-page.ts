@@ -9,9 +9,11 @@ import { Recipe, RecipeDraft } from '../../core/models/recipe.model';
 import { RECIPE_TYPES, RecipeType } from '../../core/models/recipe-type.model';
 import { RECIPE_UNITS } from '../../core/models/recipe-unit.model';
 import { RECIPE_VISIBILITIES, RecipeVisibility } from '../../core/models/recipe-visibility.model';
+import { IngredientService } from '../../core/services/ingredient.service';
 import { RecipeService } from '../../core/services/recipe.service';
 import { StorageService } from '../../core/services/storage.service';
 import { SessionStore } from '../../core/state/session.store';
+import { IngredientCombobox, IngredientSelection } from '../../shared/ingredient-combobox/ingredient-combobox';
 
 interface RecipeEditorModel {
   title: string;
@@ -35,7 +37,7 @@ function emptyModel(): RecipeEditorModel {
     servings: null,
     prepTimeMinutes: null,
     cookTimeMinutes: null,
-    ingredients: [{ quantity: null, unit: '', name: '' }],
+    ingredients: [{ ingredientId: null, quantity: null, unit: '', name: '' }],
     steps: [''],
     tagsText: '',
   };
@@ -53,7 +55,7 @@ function modelFromRecipe(recipe: Recipe): RecipeEditorModel {
     ingredients:
       recipe.ingredients.length > 0
         ? recipe.ingredients.map((ingredient) => ({ ...ingredient }))
-        : [{ quantity: null, unit: '', name: '' }],
+        : [{ ingredientId: null, quantity: null, unit: '', name: '' }],
     steps: recipe.steps.length > 0 ? [...recipe.steps] : [''],
     tagsText: recipe.tags.join(', '),
   };
@@ -61,11 +63,12 @@ function modelFromRecipe(recipe: Recipe): RecipeEditorModel {
 
 @Component({
   selector: 'app-recipe-editor-page',
-  imports: [TranslocoDirective, FormField, RouterLink],
+  imports: [TranslocoDirective, FormField, RouterLink, IngredientCombobox],
   templateUrl: './recipe-editor-page.html',
 })
 export class RecipeEditorPage {
   private readonly recipeService = inject(RecipeService);
+  private readonly ingredientService = inject(IngredientService);
   private readonly storageService = inject(StorageService);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
@@ -130,7 +133,7 @@ export class RecipeEditorPage {
   addIngredient(): void {
     this.model.update((current) => ({
       ...current,
-      ingredients: [...current.ingredients, { quantity: null, unit: '', name: '' }],
+      ingredients: [...current.ingredients, { ingredientId: null, quantity: null, unit: '', name: '' }],
     }));
   }
 
@@ -139,6 +142,42 @@ export class RecipeEditorPage {
       ...current,
       ingredients: current.ingredients.filter((_, position) => position !== index),
     }));
+  }
+
+  /** Current name for the ingredient at `index`, feeding the combobox's controlled input. */
+  ingredientName(index: number): string {
+    return this.model().ingredients[index]?.name ?? '';
+  }
+
+  /** Apply a combobox selection (typed or picked) onto the ingredient at `index`. */
+  onIngredientSelected(index: number, selection: IngredientSelection): void {
+    this.model.update((current) => ({
+      ...current,
+      ingredients: current.ingredients.map((ingredient, position) =>
+        position === index
+          ? { ...ingredient, name: selection.name, ingredientId: selection.ingredientId }
+          : ingredient,
+      ),
+    }));
+  }
+
+  /**
+   * Drop blank rows and link every remaining ingredient to a catalog entry:
+   * picked ones already carry an `ingredientId`; free-typed ones are looked up
+   * (or created) by name so duplicates written differently converge.
+   */
+  private async resolveIngredients(ingredients: Ingredient[], userId: string): Promise<Ingredient[]> {
+    const named = ingredients.filter((ingredient) => ingredient.name.trim().length > 0);
+    return Promise.all(
+      named.map(async (ingredient) => {
+        const name = ingredient.name.trim();
+        if (ingredient.ingredientId) {
+          return { ...ingredient, name };
+        }
+        const catalogIngredient = await this.ingredientService.findOrCreate(name, userId);
+        return { ...ingredient, name: catalogIngredient.name, ingredientId: catalogIngredient.ingredientId };
+      }),
+    );
   }
 
   addStep(): void {
@@ -187,6 +226,7 @@ export class RecipeEditorPage {
         const coverPhotoPath = file
           ? await this.storageService.uploadCoverPhoto(file, author.uid)
           : this.existingCoverPhotoPath();
+        const ingredients = await this.resolveIngredients(value.ingredients, author.uid);
         const draft: RecipeDraft = {
           title: value.title.trim(),
           description: value.description.trim(),
@@ -194,7 +234,7 @@ export class RecipeEditorPage {
           visibility: value.visibility,
           sharedWith: this.existingRecipe.value()?.sharedWith ?? [],
           parentId: null,
-          ingredients: value.ingredients.filter((ingredient) => ingredient.name.trim().length > 0),
+          ingredients,
           steps: value.steps.map((step) => step.trim()).filter((step) => step.length > 0),
           tags: value.tagsText
             .split(',')

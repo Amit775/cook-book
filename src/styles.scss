@@ -510,3 +510,61 @@ h3 {
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+
+.ingredient-name {
+  flex: 1;
+  min-inline-size: 8rem;
+}
+
+.combobox {
+  position: relative;
+}
+
+.combobox-input {
+  inline-size: 100%;
+  padding-block: 0.45rem;
+  padding-inline: 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.combobox-input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.combobox-listbox {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(100% + 0.25rem);
+  z-index: 20;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  max-block-size: 14rem;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 12%);
+}
+
+.combobox-option {
+  padding-block: 0.5rem;
+  padding-inline: 0.6rem;
+  border-radius: calc(var(--radius) - 4px);
+  cursor: pointer;
+}
+
+.combobox-option.is-active,
+.combobox-option:hover {
+  background: var(--color-bg);
+}
+
+.combobox-option--add {
+  color: var(--color-accent);
+  font-weight: 600;
+}
