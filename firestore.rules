@@ -39,6 +39,22 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // Shared ingredient catalog. Any signed-in user may read it (for the editor's
+    // autocomplete) and append new entries; entries are immutable and shared, so
+    // no updates or deletes. `nameLower` powers prefix search and de-duplication.
+    match /ingredients/{ingredientId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['name', 'nameLower', 'createdBy', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.nameLower is string
+        && request.resource.data.nameLower.size() > 0
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+
     // Recipes. Read access depends on visibility; writes are author-only, except
     // a signed-in visitor may add ONLY themselves to `sharedWith` (joining via a
     // share link).

@@ -18,6 +18,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { FIRESTORE } from '../firebase/firebase.providers';
+import { Ingredient } from '../models/ingredient.model';
 import { Recipe, RecipeDraft } from '../models/recipe.model';
 
 /**
@@ -232,7 +233,7 @@ function toRecipe(recipeId: string, data: DocumentData): Recipe {
     sharedWith: data['sharedWith'] ?? [],
     rootId: data['rootId'] ?? recipeId,
     parentId: data['parentId'] ?? null,
-    ingredients: data['ingredients'] ?? [],
+    ingredients: ((data['ingredients'] ?? []) as DocumentData[]).map(toIngredient),
     steps: data['steps'] ?? [],
     tags: data['tags'] ?? [],
     keywords: data['keywords'] ?? [],
@@ -243,6 +244,16 @@ function toRecipe(recipeId: string, data: DocumentData): Recipe {
     shareId: data['shareId'] ?? null,
     createdAt: toDate(data['createdAt']),
     updatedAt: toDate(data['updatedAt']),
+  };
+}
+
+/** Normalize a stored ingredient, defaulting `ingredientId` for legacy (pre-catalog) data. */
+function toIngredient(data: DocumentData): Ingredient {
+  return {
+    ingredientId: data['ingredientId'] ?? null,
+    quantity: data['quantity'] ?? null,
+    unit: data['unit'] ?? '',
+    name: data['name'] ?? '',
   };
 }
 

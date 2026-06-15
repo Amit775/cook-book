@@ -68,6 +68,8 @@
     "ingredientUnit": "יחידה",
     "selectUnit": "בחרו יחידה",
     "ingredientName": "שם המרכיב",
+    "ingredientSuggestions": "הצעות מרכיבים",
+    "addNewIngredient": "הוספת „{{name}}”",
     "addIngredient": "הוספת מרכיב",
     "steps": "שלבי הכנה",
     "stepPlaceholder": "תארו את השלב",
