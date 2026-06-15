@@ -39,6 +39,19 @@
     "shared": "Shared",
     "public": "Public"
   },
+  "unit": {
+    "gram": "g",
+    "kilogram": "kg",
+    "milliliter": "ml",
+    "liter": "L",
+    "cup": "cup",
+    "tablespoon": "tbsp",
+    "teaspoon": "tsp",
+    "piece": "piece",
+    "pinch": "pinch",
+    "package": "package",
+    "toTaste": "to taste"
+  },
   "create": {
     "heading": "New recipe"
   },
@@ -53,6 +66,7 @@
     "ingredients": "Ingredients",
     "ingredientQuantity": "Quantity",
     "ingredientUnit": "Unit",
+    "selectUnit": "Select unit",
     "ingredientName": "Ingredient",
     "addIngredient": "Add ingredient",
     "steps": "Steps",
@@ -82,6 +96,9 @@
     "ingredients": "Ingredients",
     "steps": "Steps",
     "servings": "servings",
+    "adjustServings": "Adjust servings",
+    "fewerServings": "Fewer servings",
+    "moreServings": "More servings",
     "prepTime": "Prep",
     "cookTime": "Cook",
     "otherVersions": "Other versions",
