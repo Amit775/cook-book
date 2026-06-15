@@ -15,6 +15,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 
 import { formatQuantity, scaleQuantity } from '../../core/models/quantity.model';
 import { isRecipeUnit } from '../../core/models/recipe-unit.model';
+import { parseStepDurations } from '../../core/models/step-timer.model';
 import { RecipeService } from '../../core/services/recipe.service';
 
 /**
@@ -108,6 +109,34 @@ function toggleIndex(set: ReadonlySet<number>, index: number): ReadonlySet<numbe
             <p class="cooking-step-text" [class.is-checked]="checkedSteps().has(currentStepIndex())">
               {{ recipe.steps[currentStepIndex()] }}
             </p>
+
+            @if (timerRemaining() !== null) {
+              <div class="step-timer">
+                <div class="step-timer-display" [class.is-done]="isTimerDone()" role="timer" aria-live="polite">
+                  {{ isTimerDone() ? t('cooking.timerDone') : formatTimer(timerRemaining()!) }}
+                </div>
+                <div class="step-timer-controls">
+                  @if (isTimerDone()) {
+                    <button type="button" class="button" (click)="resetTimer()">{{ t('cooking.timerDismiss') }}</button>
+                  } @else if (isTimerRunning()) {
+                    <button type="button" class="button" (click)="pauseTimer()">{{ t('cooking.timerPause') }}</button>
+                    <button type="button" class="button" (click)="resetTimer()">{{ t('cooking.timerReset') }}</button>
+                  } @else {
+                    <button type="button" class="button button--primary" (click)="resumeTimer()">{{ t('cooking.timerResume') }}</button>
+                    <button type="button" class="button" (click)="resetTimer()">{{ t('cooking.timerReset') }}</button>
+                  }
+                </div>
+              </div>
+            } @else if (currentStepDurations().length > 0) {
+              <div class="step-timer-starts">
+                @for (duration of currentStepDurations(); track $index) {
+                  <button type="button" class="button step-timer-start" (click)="startTimer(duration.seconds)">
+                    {{ t('cooking.startTimer', { label: duration.label }) }}
+                  </button>
+                }
+              </div>
+            }
+
             <div class="cooking-step-controls">
               <button
                 type="button"
@@ -171,11 +200,26 @@ export class CookingModePage {
   protected readonly checkedSteps = signal<ReadonlySet<number>>(new Set());
   protected readonly currentStepIndex = signal(0);
 
+  /** Durations detected in the current step's text, offered as tap-to-start timers. */
+  protected readonly currentStepDurations = computed(() => {
+    const steps = this.recipeResource.value()?.steps ?? [];
+    return parseStepDurations(steps[this.currentStepIndex()] ?? '');
+  });
+
+  /** Remaining seconds on the running/paused timer, or `null` when no timer is set. */
+  protected readonly timerRemaining = signal<number | null>(null);
+  protected readonly isTimerRunning = signal(false);
+  protected readonly isTimerDone = computed(() => this.timerRemaining() === 0);
+  private timerIntervalId: ReturnType<typeof setInterval> | null = null;
+
   private wakeLock: WakeLockSentinelLike | null = null;
 
   constructor() {
     afterNextRender(() => void this.requestWakeLock());
-    inject(DestroyRef).onDestroy(() => void this.releaseWakeLock());
+    inject(DestroyRef).onDestroy(() => {
+      this.clearTimerInterval();
+      void this.releaseWakeLock();
+    });
   }
 
   increaseServings(): void {
@@ -195,10 +239,12 @@ export class CookingModePage {
   }
 
   previousStep(): void {
+    this.resetTimer();
     this.currentStepIndex.update((index) => Math.max(0, index - 1));
   }
 
   nextStep(): void {
+    this.resetTimer();
     const lastIndex = (this.recipeResource.value()?.steps.length ?? 1) - 1;
     this.currentStepIndex.update((index) => Math.min(lastIndex, index + 1));
   }
@@ -210,6 +256,83 @@ export class CookingModePage {
     this.checkedSteps.update((set) => toggleIndex(set, index));
     if (!wasChecked) {
       this.nextStep();
+    }
+  }
+
+  startTimer(seconds: number): void {
+    this.clearTimerInterval();
+    this.timerRemaining.set(seconds);
+    this.isTimerRunning.set(true);
+    this.runTimerInterval();
+  }
+
+  pauseTimer(): void {
+    this.isTimerRunning.set(false);
+    this.clearTimerInterval();
+  }
+
+  resumeTimer(): void {
+    if ((this.timerRemaining() ?? 0) > 0) {
+      this.isTimerRunning.set(true);
+      this.runTimerInterval();
+    }
+  }
+
+  resetTimer(): void {
+    this.clearTimerInterval();
+    this.isTimerRunning.set(false);
+    this.timerRemaining.set(null);
+  }
+
+  formatTimer(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
+  private runTimerInterval(): void {
+    this.timerIntervalId = setInterval(() => {
+      const remaining = (this.timerRemaining() ?? 0) - 1;
+      if (remaining <= 0) {
+        this.timerRemaining.set(0);
+        this.isTimerRunning.set(false);
+        this.clearTimerInterval();
+        this.notifyTimerDone();
+      } else {
+        this.timerRemaining.set(remaining);
+      }
+    }, 1000);
+  }
+
+  private clearTimerInterval(): void {
+    if (this.timerIntervalId !== null) {
+      clearInterval(this.timerIntervalId);
+      this.timerIntervalId = null;
+    }
+  }
+
+  /** Alert when a timer finishes: a short beep and a vibration where supported. */
+  private notifyTimerDone(): void {
+    const view = this.document.defaultView;
+    view?.navigator?.vibrate?.([200, 100, 200]);
+    const AudioContextConstructor = view?.AudioContext;
+    if (!AudioContextConstructor) {
+      return;
+    }
+    try {
+      const audioContext = new AudioContextConstructor();
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.frequency.value = 880;
+      gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.8);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.8);
+      oscillator.onended = () => void audioContext.close();
+    } catch {
+      // Audio can be unavailable (autoplay policy, no device); the visual alert still shows.
     }
   }
 
