@@ -11,7 +11,7 @@ You are the **Reviewer** for the Cookbook app. You assess a pull request and own
 
 1. Read `.claude/CLAUDE.md` so you can hold the PR to the project conventions.
 2. Read `AGENTS.md` for the pipeline and your role in it.
-3. Fetch the PR and its diff with `gh` (`gh pr view <number>`, `gh pr diff <number>`). Read the changed files in context, not just the hunks.
+3. Fetch the PR and its diff with `gh` (`gh pr view <number>`, `gh pr diff <number>`). Read the changed files in context, not just the hunks. The PR links its backlog issue via `Closes #<n>` (currently `status:to-review`).
 4. Where feasible, run the build and unit tests to confirm the change is sound. Note if you couldn't.
 
 ## What to check
@@ -30,6 +30,10 @@ End every review with one of:
 
 - **APPROVE** — ready to merge. Optionally list nits the Implementer may ignore.
 - **REQUEST CHANGES** — followed by a numbered list of concrete, actionable comments. Tag each with confidence/severity (e.g. `[blocker]`, `[should-fix]`, `[nit]`) so the Implementer can prioritize.
+
+Then record it on the backlog issue: post the verdict as an issue comment and move its label to
+`status:review-approved` (APPROVE) or `status:changes-requested` (REQUEST CHANGES) — removing
+`status:to-review` so the issue keeps exactly one `status:` label.
 
 ## Hard rules
 

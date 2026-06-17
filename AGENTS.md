@@ -67,6 +67,46 @@ task
 7. **Merge.** Orchestrator merges to `main` (CI deploys hosting) and, if rules changed, runs
    `firebase deploy --only firestore:rules,storage` (CI does not deploy rules).
 
+## The backlog & status labels
+
+The task queue lives in **GitHub Issues**, not in any one session's memory. Each issue is one
+plannable feature; its **`status:` label** is its position in the pipeline above; the **plan and
+the review verdict are posted as issue comments** (the body stays the spec). The durable strategy
+— thesis and Now / Next / Later horizons — lives in [`ROADMAP.md`](ROADMAP.md).
+
+The status labels are a single state machine: **exactly one `status:` label per open issue.**
+Whenever work moves an issue, **remove the old `status:` label and add the new one in the same
+step** (`gh issue edit <n> --remove-label status:X --add-label status:Y`).
+
+| Status | Means | Who moves it next |
+|--------|-------|-------------------|
+| `status:to-plan` | ready to be planned | Planner |
+| `status:planned` | plan posted as a comment; awaiting plan approval | **user (gate 1)** |
+| `status:plan-approved` | plan approved; ready to build | Implementer |
+| `status:doing` | Implementer building (also a lock) | Implementer |
+| `status:to-review` | PR open (`Closes #<n>`); awaiting review | Reviewer |
+| `status:review-approved` | approved; awaiting merge | **user (gate 2)** |
+| `status:changes-requested` | changes requested; back to the Implementer | Implementer |
+
+Merging the PR (it carries `Closes #<n>`) **auto-closes** the issue = done. The two **user gates**
+are the same gates as in the pipeline: gate 1 is `planned → plan-approved`, gate 2 is the merge of
+a `review-approved` issue.
+
+**Who writes to GitHub** (matches each role's tools):
+
+- The **Planner** is read-only (no `gh`). It returns the plan as its final message; the
+  **orchestrator** posts that as the issue comment and moves `to-plan → planned`.
+- The **orchestrator** owns the two user-gated moves: after gate 1 it sets `planned → plan-approved`;
+  after gate 2 it merges (which auto-closes the issue).
+- The **Implementer** owns its own moves: `plan-approved → doing` on pickup, `doing → to-review` when
+  it opens the PR (with `Closes #<n>`), and `changes-requested → doing` when it starts a resolve round.
+- The **Reviewer** posts its verdict as a comment and sets `to-review → review-approved` (APPROVE) or
+  `to-review → changes-requested` (REQUEST CHANGES).
+
+The orchestrator **dequeues** by querying a label (e.g. `gh issue list --label status:plan-approved`),
+then spawns the right agent pointed at that issue number. `status:doing` doubles as a lock so two
+sessions don't grab the same issue.
+
 ## Loop bounds & escalation
 
 - **Max 3 review rounds.** If the Reviewer still requests changes after the third round, the

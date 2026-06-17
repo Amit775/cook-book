@@ -1,0 +1,65 @@
+name: Feature / backlog item
+description: A plannable unit of work for the Cookbook roadmap
+title: "<concise feature name>"
+labels: ["status:to-plan"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One plannable feature. Keep it scoped — link related issues rather than bundling.
+        After filing, add a `theme:*` and a `size:*` label, and set the milestone (Now / Next / Later).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What's missing or broken, and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What's in, and what's explicitly out.
+      value: |
+        **In:**
+        **Out:**
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Firestore-rules & i18n impact
+      description: New query shapes need matching rules; new user-facing strings need he + en keys.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How we'll know it's done. Include RTL and AXE where user-facing.
+    validations:
+      required: true
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme
+      description: Also apply the matching theme label after filing.
+      options:
+        - discover
+        - plan-cook
+        - social
+        - reach
+        - foundation
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      description: Also apply the matching size label after filing.
+      options:
+        - S
+        - M
+        - L
+    validations:
+      required: true
