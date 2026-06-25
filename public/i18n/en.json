@@ -142,5 +142,24 @@
     "heading": "Sign in",
     "google": "Continue with Google",
     "errorGoogleFailed": "Google sign-in failed. Please try again."
+  },
+  "search": {
+    "label": "Search recipes",
+    "placeholder": "Search by title, ingredient or tag",
+    "filterType": "Type",
+    "filterTag": "Tag",
+    "filterTime": "Time",
+    "allTypes": "All types",
+    "allTags": "All tags",
+    "anyTime": "Any time",
+    "timeUnder30": "Under 30 min",
+    "timeUnder60": "Under 1 hour",
+    "timeUnder120": "Under 2 hours",
+    "sort": "Sort",
+    "sortNewest": "Newest",
+    "sortQuickest": "Quickest",
+    "noResults": "No results for these filters.",
+    "resultCountOne": "{{count}} recipe",
+    "resultCountOther": "{{count}} recipes"
   }
 }
