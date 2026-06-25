@@ -30,7 +30,12 @@ import { RecipeSearchBar } from '../../shared/recipe-search-bar/recipe-search-ba
         />
 
         <div aria-live="polite" aria-atomic="true" class="visually-hidden">
-          {{ t('search.resultCount', { count: filteredRecipes().length }) }}
+          {{
+            t(
+              filteredRecipes().length === 1 ? 'search.resultCountOne' : 'search.resultCountOther',
+              { count: filteredRecipes().length }
+            )
+          }}
         </div>
 
         @if (recipesResource.isLoading()) {
@@ -88,8 +93,8 @@ export class LibraryPage {
 
   /** Unique sorted list of all tags present in the user's owned recipes. */
   protected readonly availableTags = computed(() => {
-    const all = this.recipesResource.value().flatMap((r) => r.tags);
-    return [...new Set(all)].sort((a, b) => a.localeCompare(b));
+    const all = this.recipesResource.value().flatMap((recipe) => recipe.tags);
+    return [...new Set(all)].sort((first, second) => first.localeCompare(second));
   });
 
   /** The filtered + sorted subset of owned recipes shown in the grid. */

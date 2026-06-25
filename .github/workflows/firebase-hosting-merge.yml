@@ -13,7 +13,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          # Pinned to 24.16.0: Node 24.17.0 introduced a node-fetch keep-alive
+          # regression that breaks firebase-tools OAuth with "Premature close"
+          # (Failed to authenticate). 24.16.0 still satisfies Angular CLI v22's
+          # Node >= 22.22.3 requirement. Revert to '24' once a Node/firebase-tools
+          # fix ships.
+          node-version: '24.16.0'
           cache: 'npm'
       - run: npm ci && npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0

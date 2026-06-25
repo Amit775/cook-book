@@ -95,16 +95,16 @@ export function applyFilters(recipes: Recipe[], criteria: RecipeFilterCriteria):
 
   // Sort
   if (criteria.sort === 'newest') {
-    filtered.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    filtered.sort((first, second) => second.updatedAt.getTime() - first.updatedAt.getTime());
   } else {
     // quickest — nulls sort last
-    filtered.sort((a, b) => {
-      const timeA = totalTimeMinutes(a);
-      const timeB = totalTimeMinutes(b);
-      if (timeA === null && timeB === null) return 0;
-      if (timeA === null) return 1;
-      if (timeB === null) return -1;
-      return timeA - timeB;
+    filtered.sort((first, second) => {
+      const firstTime = totalTimeMinutes(first);
+      const secondTime = totalTimeMinutes(second);
+      if (firstTime === null && secondTime === null) return 0;
+      if (firstTime === null) return 1;
+      if (secondTime === null) return -1;
+      return firstTime - secondTime;
     });
   }
 

@@ -159,6 +159,7 @@
     "sortNewest": "חדש ביותר",
     "sortQuickest": "מהיר ביותר",
     "noResults": "לא נמצאו מתכונים לפי הסינון הנוכחי.",
-    "resultCount": "{{count}} מתכונים"
+    "resultCountOne": "מתכון אחד",
+    "resultCountOther": "{{count}} מתכונים"
   }
 }

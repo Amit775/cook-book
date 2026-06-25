@@ -32,7 +32,12 @@ import { RecipeCard } from '../../shared/recipe-card/recipe-card';
         />
 
         <div aria-live="polite" aria-atomic="true" class="visually-hidden">
-          {{ t('search.resultCount', { count: filteredRecipes().length }) }}
+          {{
+            t(
+              filteredRecipes().length === 1 ? 'search.resultCountOne' : 'search.resultCountOther',
+              { count: filteredRecipes().length }
+            )
+          }}
         </div>
 
         @if (filteredRecipes().length === 0 && recipesResource.value().length > 0) {
@@ -63,8 +68,8 @@ export class BrowsePage {
 
   /** Unique sorted list of all tags present in the loaded recipe set. */
   protected readonly availableTags = computed(() => {
-    const all = this.recipesResource.value().flatMap((r) => r.tags);
-    return [...new Set(all)].sort((a, b) => a.localeCompare(b));
+    const all = this.recipesResource.value().flatMap((recipe) => recipe.tags);
+    return [...new Set(all)].sort((first, second) => first.localeCompare(second));
   });
 
   /** The filtered + sorted subset shown in the grid. */

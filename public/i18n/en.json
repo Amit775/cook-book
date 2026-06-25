@@ -159,6 +159,7 @@
     "sortNewest": "Newest",
     "sortQuickest": "Quickest",
     "noResults": "No results for these filters.",
-    "resultCount": "{{count}} recipes"
+    "resultCountOne": "{{count}} recipe",
+    "resultCountOther": "{{count}} recipes"
   }
 }
