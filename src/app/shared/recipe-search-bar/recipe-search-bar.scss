@@ -1,0 +1,68 @@
+/* Recipe search-and-filter bar.
+   Uses CSS logical properties throughout so the layout flips correctly
+   between RTL (Hebrew) and LTR (English). */
+
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  padding-block: 0.75rem;
+  padding-inline: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  margin-block-end: 1.25rem;
+}
+
+.search-bar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-inline-size: 10rem;
+}
+
+.search-bar-field--search {
+  flex: 2;
+  min-inline-size: 14rem;
+}
+
+.search-bar-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.search-bar-input {
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  inline-size: 100%;
+}
+
+.search-bar-input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.search-bar-select {
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  inline-size: 100%;
+  cursor: pointer;
+}
+
+.search-bar-select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}

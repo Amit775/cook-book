@@ -142,5 +142,23 @@
     "heading": "התחברות",
     "google": "המשך עם Google",
     "errorGoogleFailed": "ההתחברות עם Google נכשלה. נסו שוב."
+  },
+  "search": {
+    "label": "חיפוש מתכונים",
+    "placeholder": "חיפוש לפי כותרת, מרכיב או תגית",
+    "filterType": "סוג",
+    "filterTag": "תגית",
+    "filterTime": "זמן",
+    "allTypes": "כל הסוגים",
+    "allTags": "כל התגיות",
+    "anyTime": "כל זמן",
+    "timeUnder30": "עד 30 דקות",
+    "timeUnder60": "עד שעה",
+    "timeUnder120": "עד שעתיים",
+    "sort": "מיון",
+    "sortNewest": "חדש ביותר",
+    "sortQuickest": "מהיר ביותר",
+    "noResults": "לא נמצאו מתכונים לפי הסינון הנוכחי.",
+    "resultCount": "{{count}} מתכונים"
   }
 }
