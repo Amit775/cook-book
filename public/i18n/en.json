@@ -143,6 +143,27 @@
     "google": "Continue with Google",
     "errorGoogleFailed": "Google sign-in failed. Please try again."
   },
+  "saved": {
+    "save": "Save",
+    "saved": "Saved",
+    "remove": "Remove from saved",
+    "sectionTitle": "Saved recipes",
+    "empty": "No saved recipes yet."
+  },
+  "collections": {
+    "sectionTitle": "Collections",
+    "empty": "No collections yet. Create your first!",
+    "newPlaceholder": "New collection name",
+    "create": "Create collection",
+    "rename": "Rename",
+    "delete": "Delete collection",
+    "deleteConfirm": "Delete this collection? This can't be undone.",
+    "addToCollection": "Add to collection",
+    "removeFromCollection": "Remove from collection",
+    "newOption": "New collection…",
+    "recipeCountOne": "{{count}} recipe",
+    "recipeCountOther": "{{count}} recipes"
+  },
   "search": {
     "label": "Search recipes",
     "placeholder": "Search by title, ingredient or tag",

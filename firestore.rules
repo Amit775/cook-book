@@ -18,8 +18,13 @@ service cloud.firestore {
       allow create, update: if isOwner(userId);
       allow delete: if false;
 
-      // Private favorites list, owned by the user.
-      match /favorites/{recipeId} {
+      // Private saved-recipes list, owned by the user.
+      match /savedRecipes/{recipeId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Private recipe collections, owned by the user.
+      match /collections/{collectionId} {
         allow read, write: if isOwner(userId);
       }
     }

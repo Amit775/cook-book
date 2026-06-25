@@ -143,6 +143,27 @@
     "google": "המשך עם Google",
     "errorGoogleFailed": "ההתחברות עם Google נכשלה. נסו שוב."
   },
+  "saved": {
+    "save": "שמירה",
+    "saved": "נשמר",
+    "remove": "הסרה משמורים",
+    "sectionTitle": "מתכונים שמורים",
+    "empty": "עדיין לא שמרת מתכונים."
+  },
+  "collections": {
+    "sectionTitle": "אוספים",
+    "empty": "עדיין אין אוספים. צרו את הראשון!",
+    "newPlaceholder": "שם האוסף החדש",
+    "create": "יצירת אוסף",
+    "rename": "שינוי שם",
+    "delete": "מחיקת אוסף",
+    "deleteConfirm": "למחוק את האוסף? לא ניתן לבטל.",
+    "addToCollection": "הוספה לאוסף",
+    "removeFromCollection": "הסרה מהאוסף",
+    "newOption": "אוסף חדש…",
+    "recipeCountOne": "מתכון אחד",
+    "recipeCountOther": "{{count}} מתכונים"
+  },
   "search": {
     "label": "חיפוש מתכונים",
     "placeholder": "חיפוש לפי כותרת, מרכיב או תגית",

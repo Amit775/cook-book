@@ -1,17 +1,19 @@
-import { Component, computed, inject, resource, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, resource, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { applyFilters, DEFAULT_CRITERIA, RecipeFilterCriteria } from '../../core/models/recipe-filter.model';
 import { Recipe } from '../../core/models/recipe.model';
 import { RecipeService } from '../../core/services/recipe.service';
+import { LibraryStore } from '../../core/state/library.store';
 import { SessionStore } from '../../core/state/session.store';
 import { RecipeCard } from '../../shared/recipe-card/recipe-card';
 import { RecipeSearchBar } from '../../shared/recipe-search-bar/recipe-search-bar';
+import { CollectionsSection } from './collections-section';
 
 @Component({
   selector: 'app-library-page',
-  imports: [TranslocoDirective, RouterLink, RecipeCard, RecipeSearchBar],
+  imports: [TranslocoDirective, RouterLink, RecipeCard, RecipeSearchBar, CollectionsSection],
   template: `
     <section class="page" *transloco="let t">
       <div class="page-header">
@@ -52,6 +54,26 @@ import { RecipeSearchBar } from '../../shared/recipe-search-bar/recipe-search-ba
           </div>
         }
 
+        <!-- Saved recipes section -->
+        <section class="saved-section">
+          <h2>{{ t('saved.sectionTitle') }}</h2>
+          @if (isSavedLoading()) {
+            <p>{{ t('common.loading') }}</p>
+          } @else if (savedRecipes().length === 0) {
+            <p>{{ t('saved.empty') }}</p>
+          } @else {
+            <div class="recipe-grid">
+              @for (recipe of savedRecipes(); track recipe.recipeId) {
+                <app-recipe-card [recipe]="recipe" />
+              }
+            </div>
+          }
+        </section>
+
+        <!-- Collections section -->
+        <app-collections-section />
+
+        <!-- Shared with me section -->
         <section class="shared-with-me">
           <h2>{{ t('library.sharedWithMe') }}</h2>
           @if (sharedResource.isLoading()) {
@@ -70,11 +92,13 @@ import { RecipeSearchBar } from '../../shared/recipe-search-bar/recipe-search-ba
     </section>
   `,
 })
-export class LibraryPage {
+export class LibraryPage implements OnInit {
   private readonly recipeService = inject(RecipeService);
   private readonly session = inject(SessionStore);
+  private readonly libraryStore = inject(LibraryStore);
 
   protected readonly isSignedIn = this.session.isAuthenticated;
+  protected readonly isSavedLoading = this.libraryStore.isSavedLoading;
 
   protected readonly recipesResource = resource({
     params: () => this.session.user()?.uid,
@@ -101,4 +125,31 @@ export class LibraryPage {
   protected readonly filteredRecipes = computed(() =>
     applyFilters(this.recipesResource.value(), this.criteria()),
   );
+
+  /**
+   * Saved recipes resolved from their ids. Dangling refs (recipe deleted or
+   * turned private) are excluded — null results are filtered out.
+   */
+  protected readonly savedRecipes = computed(() => {
+    // Resolved from the savedResource below
+    return this._savedRecipes();
+  });
+
+  private readonly _savedRecipes = signal<Recipe[]>([]);
+
+  async ngOnInit(): Promise<void> {
+    if (this.session.isAuthenticated()) {
+      await Promise.all([
+        this.libraryStore.loadSaved(),
+        this.libraryStore.loadCollections(),
+      ]);
+      await this.resolveSavedRecipes();
+    }
+  }
+
+  private async resolveSavedRecipes(): Promise<void> {
+    const ids = this.libraryStore.savedRecipeIds();
+    const results = await Promise.all(ids.map((id) => this.recipeService.getRecipe(id)));
+    this._savedRecipes.set(results.filter((r): r is Recipe => r !== null));
+  }
 }
