@@ -62,7 +62,7 @@ let nextDetailPageId = 0;
           </div>
 
           <!-- Add to collection -->
-          @if (collections().length > 0 || true) {
+          @if (collections().length > 0) {
             <div class="add-to-collection-row">
               <label [for]="ids.collectionSelect" class="visually-hidden">
                 {{ t('collections.addToCollection') }}

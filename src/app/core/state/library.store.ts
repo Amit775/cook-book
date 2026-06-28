@@ -120,7 +120,7 @@ export const LibraryStore = signalStore(
         }
         await savedRecipeService.deleteCollection(uid, collectionId);
         patchState(store, {
-          collections: store.collections().filter((collection) => collection.collectionId !== collectionId),
+          collections: store.collections().filter((existingCollection) => existingCollection.collectionId !== collectionId),
         });
       },
 

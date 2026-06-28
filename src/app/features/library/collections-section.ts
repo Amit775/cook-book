@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { afterNextRender, Component, inject, Injector, OnInit, signal } from '@angular/core';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { Recipe } from '../../core/models/recipe.model';
@@ -55,7 +55,6 @@ let nextCollectionsSectionId = 0;
                   <label [for]="ids.renameInput" class="visually-hidden">{{ t('collections.rename') }}</label>
                   <input
                     [id]="ids.renameInput"
-                    #renameInput
                     type="text"
                     class="collection-name-input"
                     [value]="renameValue()"
@@ -92,6 +91,7 @@ let nextCollectionsSectionId = 0;
                     <button
                       type="button"
                       class="button"
+                      [id]="ids.renameTrigger(collection.collectionId)"
                       [attr.aria-label]="t('collections.rename') + ' ' + collection.name"
                       (click)="startRename(collection.collectionId, collection.name)"
                     >
@@ -100,6 +100,7 @@ let nextCollectionsSectionId = 0;
                     <button
                       type="button"
                       class="button button--danger"
+                      [id]="ids.deleteTrigger(collection.collectionId)"
                       [attr.aria-label]="t('collections.delete') + ' ' + collection.name"
                       (click)="requestDelete(collection.collectionId)"
                     >
@@ -117,6 +118,7 @@ let nextCollectionsSectionId = 0;
                     <button
                       type="button"
                       class="button button--danger"
+                      [id]="ids.deleteConfirmButton(collection.collectionId)"
                       [disabled]="isDeleting()"
                       (click)="confirmDelete(collection.collectionId)"
                     >
@@ -164,6 +166,7 @@ let nextCollectionsSectionId = 0;
 export class CollectionsSection implements OnInit {
   private readonly libraryStore = inject(LibraryStore);
   private readonly recipeService = inject(RecipeService);
+  private readonly injector = inject(Injector);
 
   protected readonly collections = this.libraryStore.collections;
   protected readonly isCollectionsLoading = this.libraryStore.isCollectionsLoading;
@@ -180,6 +183,12 @@ export class CollectionsSection implements OnInit {
   protected readonly ids = {
     newCollectionInput: `${this.uid}-new-collection`,
     renameInput: `${this.uid}-rename`,
+    /** Returns the delete-trigger button id for a given collectionId. */
+    deleteTrigger: (collectionId: string) => `${this.uid}-delete-trigger-${collectionId}`,
+    /** Returns the confirm-dialog first-button id for a given collectionId. */
+    deleteConfirmButton: (collectionId: string) => `${this.uid}-delete-confirm-${collectionId}`,
+    /** Returns the rename-trigger button id for a given collectionId. */
+    renameTrigger: (collectionId: string) => `${this.uid}-rename-trigger-${collectionId}`,
   };
 
   /**
@@ -201,23 +210,29 @@ export class CollectionsSection implements OnInit {
   /** Called whenever collections change — re-resolve member recipes. */
   private async loadMemberRecipes(): Promise<void> {
     const allCollections = this.libraryStore.collections();
-    const allRecipeIds = new Set(allCollections.flatMap((c) => c.recipeIds));
-    const recipeMap = new Map<string, Recipe>();
+    const allRecipeIds = [...new Set(allCollections.flatMap((collection) => collection.recipeIds))];
 
-    await Promise.all(
-      [...allRecipeIds].map(async (recipeId) => {
-        const recipe = await this.recipeService.getRecipe(recipeId);
-        if (recipe) {
-          recipeMap.set(recipeId, recipe);
-        }
-      }),
+    // Use allSettled so a single permission-denied or deleted recipe does not
+    // take down the whole grid — failed reads are treated as "unavailable" and
+    // filtered out, leaving the rest of the recipes visible.
+    const settled = await Promise.allSettled(
+      allRecipeIds.map((recipeId) => this.recipeService.getRecipe(recipeId)),
     );
+
+    const recipeMap = new Map<string, Recipe>();
+    allRecipeIds.forEach((recipeId, index) => {
+      const result = settled[index];
+      if (result.status === 'fulfilled' && result.value !== null) {
+        recipeMap.set(recipeId, result.value);
+      }
+      // rejected (permission-denied) or fulfilled-null (deleted) → omit silently
+    });
 
     const updatedCache = new Map<string, Recipe[]>();
     for (const collection of allCollections) {
       updatedCache.set(
         collection.collectionId,
-        collection.recipeIds.map((id) => recipeMap.get(id)).filter((r): r is Recipe => r !== undefined),
+        collection.recipeIds.map((id) => recipeMap.get(id)).filter((recipe): recipe is Recipe => recipe !== undefined),
       );
     }
     this.memberRecipeCache.set(updatedCache);
@@ -245,11 +260,32 @@ export class CollectionsSection implements OnInit {
   startRename(collectionId: string, currentName: string): void {
     this.renamingId.set(collectionId);
     this.renameValue.set(currentName);
+    // Move focus to the rename input after Angular renders it.
+    afterNextRender(
+      () => {
+        const input = document.getElementById(this.ids.renameInput);
+        if (input instanceof HTMLInputElement) {
+          input.focus();
+          input.select();
+        }
+      },
+      { injector: this.injector },
+    );
   }
 
   cancelRename(): void {
+    const returningId = this.renamingId();
     this.renamingId.set(null);
     this.renameValue.set('');
+    // Return focus to the rename-trigger button.
+    if (returningId) {
+      afterNextRender(
+        () => {
+          (document.getElementById(this.ids.renameTrigger(returningId)) as HTMLElement | null)?.focus();
+        },
+        { injector: this.injector },
+      );
+    }
   }
 
   async confirmRename(collectionId: string): Promise<void> {
@@ -263,17 +299,51 @@ export class CollectionsSection implements OnInit {
 
   requestDelete(collectionId: string): void {
     this.deletingId.set(collectionId);
+    // Move focus into the alertdialog after Angular renders it.
+    afterNextRender(
+      () => {
+        (document.getElementById(this.ids.deleteConfirmButton(collectionId)) as HTMLElement | null)?.focus();
+      },
+      { injector: this.injector },
+    );
   }
 
   cancelDelete(): void {
+    const returningId = this.deletingId();
     this.deletingId.set(null);
+    // Return focus to the delete-trigger button.
+    if (returningId) {
+      afterNextRender(
+        () => {
+          (document.getElementById(this.ids.deleteTrigger(returningId)) as HTMLElement | null)?.focus();
+        },
+        { injector: this.injector },
+      );
+    }
   }
 
   async confirmDelete(collectionId: string): Promise<void> {
     this.isDeleting.set(true);
     try {
       await this.libraryStore.deleteCollection(collectionId);
+      const returningId = this.deletingId();
       this.deletingId.set(null);
+      // The delete trigger no longer exists (collection was deleted).
+      // Move focus to the section heading or first focusable element gracefully.
+      if (returningId) {
+        afterNextRender(
+          () => {
+            // Best effort — focus the section's h2 if available, otherwise body
+            const section = document.querySelector('app-collections-section section');
+            const heading = section?.querySelector('h2');
+            if (heading instanceof HTMLElement) {
+              heading.setAttribute('tabindex', '-1');
+              heading.focus();
+            }
+          },
+          { injector: this.injector },
+        );
+      }
     } finally {
       this.isDeleting.set(false);
     }

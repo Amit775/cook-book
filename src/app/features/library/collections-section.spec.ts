@@ -77,24 +77,24 @@ function makeLibraryStoreStub(initialCollections: RecipeCollection[] = []) {
     isCollectionsLoading: () => false,
     createCollection: vi.fn(async (name: string) => {
       const id = `new-${name}`;
-      collectionsSignal.update((cols) => [...cols, makeCollection(id)]);
+      collectionsSignal.update((collections) => [...collections, makeCollection(id)]);
       return id;
     }),
     renameCollection: vi.fn(async (collectionId: string, name: string) => {
-      collectionsSignal.update((cols) =>
-        cols.map((c) => (c.collectionId === collectionId ? { ...c, name } : c)),
+      collectionsSignal.update((collections) =>
+        collections.map((collection) => (collection.collectionId === collectionId ? { ...collection, name } : collection)),
       );
     }),
     deleteCollection: vi.fn(async (collectionId: string) => {
-      collectionsSignal.update((cols) => cols.filter((c) => c.collectionId !== collectionId));
+      collectionsSignal.update((collections) => collections.filter((collection) => collection.collectionId !== collectionId));
     }),
     addRecipeToCollection: vi.fn(),
     removeRecipeFromCollection: vi.fn(async (collectionId: string, recipeId: string) => {
-      collectionsSignal.update((cols) =>
-        cols.map((c) =>
-          c.collectionId === collectionId
-            ? { ...c, recipeIds: c.recipeIds.filter((id) => id !== recipeId) }
-            : c,
+      collectionsSignal.update((collections) =>
+        collections.map((collection) =>
+          collection.collectionId === collectionId
+            ? { ...collection, recipeIds: collection.recipeIds.filter((id) => id !== recipeId) }
+            : collection,
         ),
       );
     }),
@@ -227,7 +227,7 @@ describe('CollectionsSection', () => {
   // Dangling reference handling
   // -------------------------------------------------------------------------
 
-  it('filters out null (dangling) recipe references from member grids', async () => {
+  it('filters out null (deleted) recipe references from member grids', async () => {
     const collection = makeCollection('c1', ['exists', 'deleted']);
     const existingRecipe = makeRecipe('exists');
     await setup([collection], { exists: existingRecipe, deleted: null });
@@ -238,6 +238,33 @@ describe('CollectionsSection', () => {
 
     expect(text()).toContain('Recipe exists');
     expect(text()).not.toContain('Recipe deleted');
+  });
+
+  it('filters out permission-denied (private/unreadable) recipes without breaking the grid', async () => {
+    const collection = makeCollection('c1', ['readable', 'private']);
+    const readableRecipe = makeRecipe('readable');
+    // Configure the recipe service stub to reject for the 'private' id
+    await setup([collection], { readable: readableRecipe, private: null });
+    // Override the getRecipe stub after setup to simulate a permission-denied rejection
+    recipeServiceStub.getRecipe.mockImplementation((id: string) => {
+      if (id === 'private') {
+        return Promise.reject(new Error('permission-denied'));
+      }
+      return Promise.resolve(id === 'readable' ? readableRecipe : null);
+    });
+
+    // Trigger a re-load by calling ngOnInit equivalent (reload member recipes)
+    // by accessing the component instance via the fixture
+    const component = fixture.componentInstance as CollectionsSection & { loadMemberRecipes?(): Promise<void> };
+    // Re-trigger ngOnInit which calls loadMemberRecipes
+    await (fixture.componentInstance as unknown as { ngOnInit(): Promise<void> }).ngOnInit();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The readable recipe must still render; the private one must be silently dropped.
+    expect(text()).toContain('Recipe readable');
+    expect(text()).not.toContain('Recipe private');
   });
 
   // -------------------------------------------------------------------------

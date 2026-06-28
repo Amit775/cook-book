@@ -128,14 +128,10 @@ export class LibraryPage implements OnInit {
 
   /**
    * Saved recipes resolved from their ids. Dangling refs (recipe deleted or
-   * turned private) are excluded — null results are filtered out.
+   * turned private, or permission-denied) are excluded — null/rejected reads
+   * are filtered out silently.
    */
-  protected readonly savedRecipes = computed(() => {
-    // Resolved from the savedResource below
-    return this._savedRecipes();
-  });
-
-  private readonly _savedRecipes = signal<Recipe[]>([]);
+  protected readonly savedRecipes = signal<Recipe[]>([]);
 
   async ngOnInit(): Promise<void> {
     if (this.session.isAuthenticated()) {
@@ -149,7 +145,14 @@ export class LibraryPage implements OnInit {
 
   private async resolveSavedRecipes(): Promise<void> {
     const ids = this.libraryStore.savedRecipeIds();
-    const results = await Promise.all(ids.map((id) => this.recipeService.getRecipe(id)));
-    this._savedRecipes.set(results.filter((r): r is Recipe => r !== null));
+    // Use allSettled so a single permission-denied or deleted recipe does not
+    // take down the whole Saved grid — failed reads are treated as "unavailable"
+    // and filtered out, leaving the rest of the recipes visible.
+    const settled = await Promise.allSettled(ids.map((id) => this.recipeService.getRecipe(id)));
+    const resolved = settled
+      .filter((result): result is PromiseFulfilledResult<Recipe | null> => result.status === 'fulfilled')
+      .map((result) => result.value)
+      .filter((recipe): recipe is Recipe => recipe !== null);
+    this.savedRecipes.set(resolved);
   }
 }
