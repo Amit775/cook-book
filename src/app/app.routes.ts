@@ -26,6 +26,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/library/library-page').then((m) => m.LibraryPage),
   },
   {
+    path: 'shopping-list',
+    loadComponent: () => import('./features/shopping-list/shopping-list-page').then((m) => m.ShoppingListPage),
+  },
+  {
     path: 'login',
     loadComponent: () => import('./features/auth/login-page').then((m) => m.LoginPage),
   },

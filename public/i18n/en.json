@@ -5,7 +5,8 @@
   "nav": {
     "browse": "Browse",
     "create": "New recipe",
-    "library": "My library"
+    "library": "My library",
+    "shoppingList": "Shopping list"
   },
   "actions": {
     "toggleLanguage": "עברית",
@@ -163,6 +164,24 @@
     "newOption": "New collection…",
     "recipeCountOne": "{{count}} recipe",
     "recipeCountOther": "{{count}} recipes"
+  },
+  "shoppingList": {
+    "heading": "Shopping list",
+    "emptyNoLists": "No shopping lists yet. Create your first!",
+    "emptyList": "This list is empty. Add ingredients from a recipe.",
+    "selectList": "Select list",
+    "newListPlaceholder": "New list name",
+    "createList": "Create list",
+    "newOption": "New list…",
+    "rename": "Rename",
+    "deleteList": "Delete list",
+    "deleteConfirm": "Delete this list? This can't be undone.",
+    "addToList": "Add to shopping list",
+    "added": "Added to «{{listName}}»",
+    "clear": "Clear list",
+    "clearConfirm": "Clear all items? This can't be undone.",
+    "itemCountOne": "1 item",
+    "itemCountOther": "{{count}} items"
   },
   "search": {
     "label": "Search recipes",

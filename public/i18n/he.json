@@ -5,7 +5,8 @@
   "nav": {
     "browse": "עיון",
     "create": "מתכון חדש",
-    "library": "הספרייה שלי"
+    "library": "הספרייה שלי",
+    "shoppingList": "רשימת קניות"
   },
   "actions": {
     "toggleLanguage": "English",
@@ -163,6 +164,24 @@
     "newOption": "אוסף חדש…",
     "recipeCountOne": "מתכון אחד",
     "recipeCountOther": "{{count}} מתכונים"
+  },
+  "shoppingList": {
+    "heading": "רשימת קניות",
+    "emptyNoLists": "אין עדיין רשימות קניות. צרו את הראשונה!",
+    "emptyList": "הרשימה ריקה. הוסיפו מרכיבים ממתכון.",
+    "selectList": "בחרו רשימה",
+    "newListPlaceholder": "שם הרשימה החדשה",
+    "createList": "יצירת רשימה",
+    "newOption": "רשימה חדשה…",
+    "rename": "שינוי שם",
+    "deleteList": "מחיקת רשימה",
+    "deleteConfirm": "למחוק את הרשימה? לא ניתן לבטל.",
+    "addToList": "הוספה לרשימת קניות",
+    "added": "נוסף לרשימה «{{listName}}»",
+    "clear": "ניקוי הרשימה",
+    "clearConfirm": "לנקות את כל הפריטים ברשימה? לא ניתן לבטל.",
+    "itemCountOne": "פריט אחד",
+    "itemCountOther": "{{count}} פריטים"
   },
   "search": {
     "label": "חיפוש מתכונים",
