@@ -3,13 +3,18 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     // Recipe cover photos live under recipe-photos/{userId}/{fileName}.
-    // Anyone can read; only the owning user can upload, and only images < 5 MB.
+    // Anyone can read; only the owning user can upload or delete.
+    // Note: request.resource is null on delete, so size/contentType checks
+    // must only apply to create/update — a single `allow write` with those
+    // conditions would reject deletes. Split into three explicit verbs.
     match /recipe-photos/{userId}/{fileName} {
       allow read: if true;
-      allow write: if request.auth != null
-                   && request.auth.uid == userId
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+      allow create, update: if request.auth != null
+                            && request.auth.uid == userId
+                            && request.resource.size < 5 * 1024 * 1024
+                            && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null
+                    && request.auth.uid == userId;
     }
   }
 }

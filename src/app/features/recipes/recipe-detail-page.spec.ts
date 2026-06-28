@@ -1,6 +1,6 @@
-import { signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { provideTransloco, TranslocoLoader } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -29,6 +29,11 @@ import { StorageService } from '../../core/services/storage.service';
 import { LibraryStore } from '../../core/state/library.store';
 import { SessionStore } from '../../core/state/session.store';
 import { RecipeDetailPage } from './recipe-detail-page';
+
+// Blank component used as a catch-all route so navigateByUrl('/library') and
+// similar calls don't throw NG04002 "cannot match any routes" in tests.
+@Component({ template: '' })
+class BlankComponent {}
 
 class StubLoader implements TranslocoLoader {
   getTranslation() {
@@ -62,6 +67,11 @@ class StubLoader implements TranslocoLoader {
       'recipeType.cocktail': 'Cocktail',
       'saved.save': 'Save',
       'saved.saved': 'Saved',
+      'share.title': 'Share',
+      'share.peopleWithAccess': 'People with access',
+      'share.createHint': 'Create a link',
+      'share.createLink': 'Create link',
+      'share.noOne': 'No one',
     });
   }
 }
@@ -183,5 +193,123 @@ describe('RecipeDetailPage — add-to-collection select visibility', () => {
 
     const select = getCollectionSelect();
     expect(select).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// RecipeDetailPage — cover photo cleanup on recipe delete
+// ---------------------------------------------------------------------------
+
+describe('RecipeDetailPage — orphaned cover cleanup on delete', () => {
+  let fixture: ComponentFixture<RecipeDetailPage>;
+  let storageServiceStub: {
+    getPhotoUrl: ReturnType<typeof vi.fn>;
+    deleteCoverPhoto: ReturnType<typeof vi.fn>;
+    copyCoverPhoto: ReturnType<typeof vi.fn>;
+  };
+  let recipeServiceStub: {
+    getRecipe: ReturnType<typeof vi.fn>;
+    listVersions: ReturnType<typeof vi.fn>;
+    cloneRecipe: ReturnType<typeof vi.fn>;
+    deleteRecipe: ReturnType<typeof vi.fn>;
+    listMyRecipes: ReturnType<typeof vi.fn>;
+  };
+
+  async function setup(recipe: Recipe, ownedRecipes: Recipe[] = []): Promise<void> {
+    storageServiceStub = {
+      getPhotoUrl: vi.fn(async () => 'https://example.com/photo.jpg'),
+      deleteCoverPhoto: vi.fn(async () => undefined),
+      copyCoverPhoto: vi.fn(async () => null),
+    };
+    recipeServiceStub = {
+      getRecipe: vi.fn(async () => recipe),
+      listVersions: vi.fn(async () => []),
+      cloneRecipe: vi.fn(async () => 'new-recipe-id'),
+      deleteRecipe: vi.fn(async () => {}),
+      listMyRecipes: vi.fn(async () => ownedRecipes),
+    };
+    const sessionStoreStub = makeSessionStoreStub(true);
+    const libraryStoreStub = makeLibraryStoreStub();
+
+    await TestBed.configureTestingModule({
+      imports: [RecipeDetailPage],
+      providers: [
+        provideRouter([{ path: '**', component: BlankComponent }]),
+        provideTransloco({
+          config: { availableLangs: ['en'], defaultLang: 'en', reRenderOnLangChange: false },
+          loader: StubLoader,
+        }),
+        { provide: SessionStore, useValue: sessionStoreStub },
+        { provide: LibraryStore, useValue: libraryStoreStub },
+        { provide: RecipeService, useValue: recipeServiceStub },
+        { provide: StorageService, useValue: storageServiceStub },
+        { provide: FIRESTORE, useValue: {} },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(RecipeDetailPage);
+    fixture.componentRef.setInput('recipeId', 'recipe1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('calls deleteCoverPhoto with the cover path after a successful recipe delete', async () => {
+    const recipe = { ...makeRecipe(), coverPhotoPath: 'recipe-photos/user1/photo.jpg' };
+    await setup(recipe, [recipe]);
+
+    await fixture.componentInstance.confirmDelete(recipe);
+
+    expect(recipeServiceStub.deleteRecipe).toHaveBeenCalledOnce();
+    expect(storageServiceStub.deleteCoverPhoto).toHaveBeenCalledWith('recipe-photos/user1/photo.jpg');
+  });
+
+  it('does NOT call deleteCoverPhoto when the recipe has no cover', async () => {
+    const recipe = makeRecipe(); // coverPhotoPath: null
+    await setup(recipe, [recipe]);
+
+    await fixture.componentInstance.confirmDelete(recipe);
+
+    expect(recipeServiceStub.deleteRecipe).toHaveBeenCalledOnce();
+    expect(storageServiceStub.deleteCoverPhoto).not.toHaveBeenCalled();
+  });
+
+  it('skips delete when another owned recipe still references the same path (same-owner guard)', async () => {
+    const sharedPath = 'recipe-photos/user1/shared.jpg';
+    const recipe = { ...makeRecipe(), coverPhotoPath: sharedPath };
+    const otherRecipe = { ...makeRecipe(), recipeId: 'recipe2', coverPhotoPath: sharedPath };
+    await setup(recipe, [recipe, otherRecipe]);
+
+    await fixture.componentInstance.confirmDelete(recipe);
+
+    expect(recipeServiceStub.deleteRecipe).toHaveBeenCalledOnce();
+    // Guard fires — another owned recipe uses the same path; skip delete.
+    expect(storageServiceStub.deleteCoverPhoto).not.toHaveBeenCalled();
+  });
+
+  it('still navigates to /library when deleteCoverPhoto resolves (missing object)', async () => {
+    // deleteCoverPhoto resolves silently for missing objects (already tested in service).
+    const recipe = { ...makeRecipe(), coverPhotoPath: 'recipe-photos/user1/photo.jpg' };
+    await setup(recipe, [recipe]);
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
+
+    await fixture.componentInstance.confirmDelete(recipe);
+
+    expect(navigateSpy).toHaveBeenCalledWith('/library');
+  });
+
+  it('still navigates to /library even when deleteCoverPhoto throws', async () => {
+    const recipe = { ...makeRecipe(), coverPhotoPath: 'recipe-photos/user1/photo.jpg' };
+    await setup(recipe, [recipe]);
+    storageServiceStub.deleteCoverPhoto.mockRejectedValue(new Error('storage error'));
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
+
+    await fixture.componentInstance.confirmDelete(recipe);
+
+    expect(navigateSpy).toHaveBeenCalledWith('/library');
   });
 });

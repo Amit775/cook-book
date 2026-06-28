@@ -313,10 +313,42 @@ export class RecipeDetailPage implements OnInit {
   async confirmDelete(recipe: Recipe): Promise<void> {
     this.isDeleting.set(true);
     try {
+      // Firestore write first (ordering invariant), then Storage delete.
       await this.recipeService.deleteRecipe(recipe.recipeId);
+      // After Firestore doc is gone, clean up the Storage object if no other
+      // owned recipe still references it (same-owner reference guard).
+      await this.deleteOrphanedCoverIfSafe(recipe);
       await this.router.navigateByUrl('/library');
     } finally {
       this.isDeleting.set(false);
+    }
+  }
+
+  /**
+   * Delete the cover Storage object for a just-deleted recipe, guarded by an
+   * in-memory check that no other recipe owned by the current user still
+   * references the same path. Failures are swallowed — never block navigation.
+   */
+  private async deleteOrphanedCoverIfSafe(recipe: Recipe): Promise<void> {
+    if (!recipe.coverPhotoPath) {
+      return;
+    }
+    try {
+      const userId = this.session.user()?.uid;
+      if (!userId) {
+        return;
+      }
+      const ownedRecipes = await this.recipeService.listMyRecipes(userId);
+      const isStillReferenced = ownedRecipes.some(
+        (owned) => owned.recipeId !== recipe.recipeId && owned.coverPhotoPath === recipe.coverPhotoPath,
+      );
+      if (isStillReferenced) {
+        return; // another owned recipe still uses this object — skip delete
+      }
+      await this.storageService.deleteCoverPhoto(recipe.coverPhotoPath);
+    } catch (error) {
+      console.error('[RecipeDetailPage] Failed to delete orphaned cover photo:', error);
+      // Never block navigation
     }
   }
 
