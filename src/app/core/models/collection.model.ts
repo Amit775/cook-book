@@ -1,4 +1,4 @@
-import { DocumentData, Timestamp } from 'firebase/firestore';
+import { DocumentData } from 'firebase/firestore';
 
 export interface RecipeCollection {
   /** Firestore document id. */
@@ -28,5 +28,13 @@ export function toRecipeCollection(collectionId: string, data: DocumentData): Re
 }
 
 function toDate(value: unknown): Date {
-  return value instanceof Timestamp ? value.toDate() : new Date();
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    'toDate' in value &&
+    typeof (value as { toDate: unknown }).toDate === 'function'
+  ) {
+    return (value as { toDate: () => Date }).toDate();
+  }
+  return new Date();
 }

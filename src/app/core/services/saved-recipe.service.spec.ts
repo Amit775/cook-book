@@ -58,8 +58,6 @@ vi.mock('firebase/firestore', () => {
     serverTimestamp: () => (mocks.serverTimestamp as Function)(),
     arrayUnion: (...args: unknown[]) => (mocks.arrayUnion as Function)(...args),
     arrayRemove: (...args: unknown[]) => (mocks.arrayRemove as Function)(...args),
-    // Timestamp stub for completeness (not used by these tests)
-    Timestamp: class {},
   };
 });
 

@@ -61,30 +61,28 @@ let nextDetailPageId = 0;
             }
           </div>
 
-          <!-- Add to collection -->
-          @if (collections().length > 0) {
-            <div class="add-to-collection-row">
-              <label [for]="ids.collectionSelect" class="visually-hidden">
-                {{ t('collections.addToCollection') }}
-              </label>
-              <select
-                [id]="ids.collectionSelect"
-                class="search-bar-select"
-                [value]="selectedCollectionId()"
-                (change)="onCollectionSelectChange($event)"
-                [attr.aria-label]="t('collections.addToCollection')"
-              >
-                <option value="">{{ t('collections.addToCollection') }}</option>
-                @for (col of collections(); track col.collectionId) {
-                  <option [value]="col.collectionId">{{ col.name }}</option>
-                }
-                <option value="__new__">{{ t('collections.newOption') }}</option>
-              </select>
-              @if (addingToCollection()) {
-                <span aria-live="polite" class="visually-hidden">{{ t('common.saving') }}</span>
+          <!-- Add to collection (always shown when signed in so user can create first collection inline) -->
+          <div class="add-to-collection-row">
+            <label [for]="ids.collectionSelect" class="visually-hidden">
+              {{ t('collections.addToCollection') }}
+            </label>
+            <select
+              [id]="ids.collectionSelect"
+              class="search-bar-select"
+              [value]="selectedCollectionId()"
+              (change)="onCollectionSelectChange($event)"
+              [attr.aria-label]="t('collections.addToCollection')"
+            >
+              <option value="">{{ t('collections.addToCollection') }}</option>
+              @for (col of collections(); track col.collectionId) {
+                <option [value]="col.collectionId">{{ col.name }}</option>
               }
-            </div>
-          }
+              <option value="__new__">{{ t('collections.newOption') }}</option>
+            </select>
+            @if (addingToCollection()) {
+              <span aria-live="polite" class="visually-hidden">{{ t('common.saving') }}</span>
+            }
+          </div>
 
           <!-- Inline new collection form -->
           @if (showingNewCollectionForm()) {
