@@ -20,7 +20,7 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 import { FIRESTORE } from '../../core/firebase/firebase.providers';
-import { ShoppingList } from '../../core/models/shopping-list.model';
+import { ShoppingList, sortItemsAlphabetically } from '../../core/models/shopping-list.model';
 import { ShoppingListStore } from '../../core/state/shopping-list.store';
 import { SessionStore } from '../../core/state/session.store';
 import { ShoppingListPage } from './shopping-list-page';
@@ -75,7 +75,8 @@ function makeShoppingListStoreStub(overrides: Partial<{
   const activeListId = signal(overrides.activeListId ?? null);
   const isLoading = signal(overrides.isLoading ?? false);
   const activeList = () => lists().find((list) => list.listId === activeListId()) ?? null;
-  const displayItems = () => activeList()?.items ?? [];
+  // Mirror the real store: return items alphabetically sorted (same object references).
+  const displayItems = () => sortItemsAlphabetically(activeList()?.items ?? []);
   const itemCount = () => activeList()?.items.length ?? 0;
   const uncheckedCount = () => activeList()?.items.filter((item) => !item.checked).length ?? 0;
 
@@ -235,6 +236,26 @@ describe('ShoppingListPage', () => {
     fixture.detectChanges();
 
     expect(shoppingListStoreStub.toggleItem).toHaveBeenCalledOnce();
+  });
+
+  it('passes the original-array index (not display index) to toggleItem when sort reorders items', async () => {
+    // Items stored in reverse-alpha order: [Zucchini(0), Apple(1), Banana(2)]
+    // displayItems() sorts them alphabetically: [Apple, Banana, Zucchini]
+    // Toggling the first displayed item (Apple, display index 0) must call toggleItem(1)
+    // because Apple is at index 1 in the raw items array.
+    const zucchiniItem = { ingredientId: null, name: 'Zucchini', unit: '', quantity: null, checked: false, sourceRecipeIds: ['r1'] };
+    const appleItem    = { ingredientId: null, name: 'Apple',    unit: '', quantity: null, checked: false, sourceRecipeIds: ['r1'] };
+    const bananaItem   = { ingredientId: null, name: 'Banana',   unit: '', quantity: null, checked: false, sourceRecipeIds: ['r1'] };
+    const list = makeList({ listId: 'list1', items: [zucchiniItem, appleItem, bananaItem] });
+    await setup(true, { lists: [list], activeListId: 'list1' });
+
+    // displayItems order: Apple(display 0), Banana(display 1), Zucchini(display 2)
+    const checkboxes: NodeList = fixture.nativeElement.querySelectorAll('input[type="checkbox"]');
+    // Click display-index 0 (Apple → raw index 1)
+    (checkboxes[0] as HTMLInputElement).dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(shoppingListStoreStub.toggleItem).toHaveBeenCalledWith(1);
   });
 
   // -----------------------------------------------------------------------

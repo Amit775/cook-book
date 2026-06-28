@@ -138,7 +138,9 @@ export function mergeItems(existing: ShoppingListItem[], incoming: ShoppingListI
  * to `targetServings`. Uses `scaleQuantity` from `quantity.model.ts`.
  */
 export function itemsFromRecipe(recipe: Recipe, targetServings: number): ShoppingListItem[] {
-  const baseServings = recipe.servings ?? 1;
+  // Guard against 0 / null / undefined base servings to avoid NaN quantities.
+  // Treat any falsy-or-zero value as 1 (same convention as the detail-page scaler).
+  const baseServings = recipe.servings || 1;
   const scaleFactor = targetServings / baseServings;
 
   return recipe.ingredients.map(

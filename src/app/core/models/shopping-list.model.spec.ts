@@ -249,6 +249,17 @@ describe('itemsFromRecipe', () => {
     const items = itemsFromRecipe(recipe, 2);
     expect(items[0].quantity).toBe(200);
   });
+
+  it('does not produce NaN when recipe.servings is 0 (divide-by-zero guard)', () => {
+    const recipe = makeRecipe({
+      ingredients: [makeIngredient({ quantity: 100, unit: 'gram' })],
+      servings: 0,
+    });
+    // baseServings 0 is treated as 1; factor = targetServings / 1
+    const items = itemsFromRecipe(recipe, 4);
+    expect(items[0].quantity).not.toBeNaN();
+    expect(items[0].quantity).toBe(400);
+  });
 });
 
 // ---------------------------------------------------------------------------
