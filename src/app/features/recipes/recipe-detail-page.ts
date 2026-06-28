@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, resource, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, OnInit, resource, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 
@@ -8,13 +8,17 @@ import { Recipe } from '../../core/models/recipe.model';
 import { isRecipeUnit } from '../../core/models/recipe-unit.model';
 import { RecipeService } from '../../core/services/recipe.service';
 import { StorageService } from '../../core/services/storage.service';
+import { LibraryStore } from '../../core/state/library.store';
 import { SessionStore } from '../../core/state/session.store';
 import { RecipeCard } from '../../shared/recipe-card/recipe-card';
+import { SaveRecipeButton } from '../../shared/save-recipe-button/save-recipe-button';
 import { RecipeShare } from './recipe-share';
+
+let nextDetailPageId = 0;
 
 @Component({
   selector: 'app-recipe-detail-page',
-  imports: [TranslocoDirective, RouterLink, RecipeCard, RecipeShare],
+  imports: [TranslocoDirective, RouterLink, RecipeCard, RecipeShare, SaveRecipeButton],
   template: `
     <section class="page" *transloco="let t">
       @if (recipeResource.isLoading()) {
@@ -50,11 +54,65 @@ import { RecipeShare } from './recipe-share';
             <button type="button" class="button button--primary" [disabled]="isCloning()" (click)="clone(recipe)">
               {{ isCloning() ? t('recipeDetail.cloning') : t('actions.clone') }}
             </button>
+            <app-save-recipe-button [recipeId]="recipe.recipeId" />
             @if (isOwner()) {
               <a class="button" [routerLink]="['/recipes', recipe.recipeId, 'edit']">{{ t('actions.edit') }}</a>
               <button type="button" class="button" (click)="requestDelete()">{{ t('actions.delete') }}</button>
             }
           </div>
+
+          <!-- Add to collection (always shown when signed in so user can create first collection inline) -->
+          <div class="add-to-collection-row">
+            <label [for]="ids.collectionSelect" class="visually-hidden">
+              {{ t('collections.addToCollection') }}
+            </label>
+            <select
+              [id]="ids.collectionSelect"
+              class="search-bar-select"
+              [value]="selectedCollectionId()"
+              (change)="onCollectionSelectChange($event)"
+              [attr.aria-label]="t('collections.addToCollection')"
+            >
+              <option value="">{{ t('collections.addToCollection') }}</option>
+              @for (col of collections(); track col.collectionId) {
+                <option [value]="col.collectionId">{{ col.name }}</option>
+              }
+              <option value="__new__">{{ t('collections.newOption') }}</option>
+            </select>
+            @if (addingToCollection()) {
+              <span aria-live="polite" class="visually-hidden">{{ t('common.saving') }}</span>
+            }
+          </div>
+
+          <!-- Inline new collection form -->
+          @if (showingNewCollectionForm()) {
+            <div class="new-collection-inline">
+              <label [for]="ids.newCollectionInput" class="visually-hidden">
+                {{ t('collections.newPlaceholder') }}
+              </label>
+              <input
+                [id]="ids.newCollectionInput"
+                type="text"
+                class="collection-name-input"
+                [placeholder]="t('collections.newPlaceholder')"
+                [value]="newCollectionName()"
+                (input)="newCollectionName.set(getInputValue($event))"
+                (keydown.enter)="createAndAddToCollection(recipe.recipeId)"
+                (keydown.escape)="cancelNewCollection()"
+              />
+              <button
+                type="button"
+                class="button button--primary"
+                [disabled]="newCollectionName().trim().length === 0 || isCreatingCollection()"
+                (click)="createAndAddToCollection(recipe.recipeId)"
+              >
+                {{ t('collections.create') }}
+              </button>
+              <button type="button" class="button" (click)="cancelNewCollection()">
+                {{ t('actions.cancel') }}
+              </button>
+            </div>
+          }
 
           @if (confirmingDelete()) {
             <div class="delete-confirm" role="alertdialog" aria-live="assertive">
@@ -138,10 +196,11 @@ import { RecipeShare } from './recipe-share';
     </section>
   `,
 })
-export class RecipeDetailPage {
+export class RecipeDetailPage implements OnInit {
   private readonly recipeService = inject(RecipeService);
   private readonly storageService = inject(StorageService);
   private readonly session = inject(SessionStore);
+  private readonly libraryStore = inject(LibraryStore);
   private readonly router = inject(Router);
 
   /** Bound from the `:recipeId` route parameter (withComponentInputBinding). */
@@ -151,6 +210,21 @@ export class RecipeDetailPage {
   protected readonly isCloning = signal(false);
   protected readonly confirmingDelete = signal(false);
   protected readonly isDeleting = signal(false);
+
+  protected readonly collections = this.libraryStore.collections;
+
+  protected readonly selectedCollectionId = signal('');
+  protected readonly showingNewCollectionForm = signal(false);
+  protected readonly newCollectionName = signal('');
+  protected readonly isCreatingCollection = signal(false);
+  protected readonly addingToCollection = signal(false);
+
+  /** Stable unique id prefix for label associations. */
+  private readonly uid = `recipe-detail-${nextDetailPageId++}`;
+  protected readonly ids = {
+    collectionSelect: `${this.uid}-collection-select`,
+    newCollectionInput: `${this.uid}-new-collection`,
+  };
 
   protected readonly recipeResource = resource({
     params: () => this.recipeId() || undefined,
@@ -205,6 +279,15 @@ export class RecipeDetailPage {
     return parseDurationToMinutes(duration);
   }
 
+  async ngOnInit(): Promise<void> {
+    if (this.session.isAuthenticated()) {
+      await Promise.all([
+        this.libraryStore.loadSaved(),
+        this.libraryStore.loadCollections(),
+      ]);
+    }
+  }
+
   async clone(recipe: Recipe): Promise<void> {
     const cloner = this.session.user();
     if (!cloner) {
@@ -234,6 +317,58 @@ export class RecipeDetailPage {
       await this.router.navigateByUrl('/library');
     } finally {
       this.isDeleting.set(false);
+    }
+  }
+
+  protected getInputValue(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
+  protected onCollectionSelectChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value === '__new__') {
+      this.showingNewCollectionForm.set(true);
+      this.selectedCollectionId.set('');
+      // Reset the select to the placeholder
+      (event.target as HTMLSelectElement).value = '';
+    } else if (value) {
+      this.selectedCollectionId.set(value);
+      const recipeId = this.recipeId();
+      if (recipeId) {
+        this.addToExistingCollection(value, recipeId);
+      }
+      // Reset select after action
+      (event.target as HTMLSelectElement).value = '';
+      this.selectedCollectionId.set('');
+    }
+  }
+
+  private async addToExistingCollection(collectionId: string, recipeId: string): Promise<void> {
+    this.addingToCollection.set(true);
+    try {
+      await this.libraryStore.addRecipeToCollection(collectionId, recipeId);
+    } finally {
+      this.addingToCollection.set(false);
+    }
+  }
+
+  cancelNewCollection(): void {
+    this.showingNewCollectionForm.set(false);
+    this.newCollectionName.set('');
+  }
+
+  async createAndAddToCollection(recipeId: string): Promise<void> {
+    const name = this.newCollectionName().trim();
+    if (!name) {
+      return;
+    }
+    this.isCreatingCollection.set(true);
+    try {
+      const collectionId = await this.libraryStore.createCollection(name);
+      await this.libraryStore.addRecipeToCollection(collectionId, recipeId);
+      this.cancelNewCollection();
+    } finally {
+      this.isCreatingCollection.set(false);
     }
   }
 }
