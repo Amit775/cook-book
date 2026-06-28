@@ -37,9 +37,18 @@ Horizons map to GitHub **milestones**. Themes and sizes map to **labels**.
 
 ### Next — reasons to return weekly
 
+**Grocery list epic** — turn recipes into managed, checkable, organized shopping lists that persist per user. Built incrementally; #15 (core) ships and stands alone, the rest layer on:
+
 | Issue | Feature | Theme | Size |
 |-------|---------|-------|------|
-| [#15](https://github.com/Amit775/cook-book/issues/15) | Shopping list generator | plan-cook | M |
+| [#15](https://github.com/Amit775/cook-book/issues/15) | Shopping lists: core & generation | plan-cook | L |
+| [#29](https://github.com/Amit775/cook-book/issues/29) | Shopping list: manual reordering (drag + keyboard) | plan-cook | M |
+| [#30](https://github.com/Amit775/cook-book/issues/30) | Shopping list: sections / grouping by aisle | plan-cook | L |
+| [#31](https://github.com/Amit775/cook-book/issues/31) | Build a list from multiple recipes at once | plan-cook | M |
+| [#32](https://github.com/Amit775/cook-book/issues/32) | Ingredient categories in the catalog | foundation | M |
+
+| Issue | Feature | Theme | Size |
+|-------|---------|-------|------|
 | [#16](https://github.com/Amit775/cook-book/issues/16) | Weekly meal planner | plan-cook | L |
 | [#17](https://github.com/Amit775/cook-book/issues/17) | AI recipe import (paste / URL) | reach | M |
 | [#18](https://github.com/Amit775/cook-book/issues/18) | Ratings & reviews | social | M |
