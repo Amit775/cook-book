@@ -85,6 +85,14 @@ export class RecipeEditorPage {
   protected readonly coverPhotoFile = signal<File | null>(null);
   protected readonly coverPhotoPreview = signal<string | null>(null);
   private readonly existingCoverPhotoPath = signal<string | null>(null);
+  /**
+   * The cover path that was persisted when the recipe was loaded. Unlike
+   * `existingCoverPhotoPath` (which `removeCoverPhoto()` clears), this value
+   * is only ever set by the load effect and never changed by user actions.
+   * It lets `save()` know what object to delete when the user replaces or
+   * removes the cover.
+   */
+  private readonly savedCoverPhotoPath = signal<string | null>(null);
 
   protected readonly model = signal<RecipeEditorModel>(emptyModel());
   protected readonly recipeForm = form(this.model, (path) => {
@@ -122,6 +130,7 @@ export class RecipeEditorPage {
       }
       this.model.set(modelFromRecipe(recipe));
       this.existingCoverPhotoPath.set(recipe.coverPhotoPath);
+      this.savedCoverPhotoPath.set(recipe.coverPhotoPath);
       if (recipe.coverPhotoPath) {
         void this.storageService
           .getPhotoUrl(recipe.coverPhotoPath)
@@ -223,6 +232,14 @@ export class RecipeEditorPage {
       try {
         const value = this.model();
         const file = this.coverPhotoFile();
+
+        // The path that was persisted when this recipe was loaded — this is
+        // the object that may need deleting if the cover was replaced or removed.
+        // We use `savedCoverPhotoPath` (set at load, never touched by user
+        // actions) rather than `existingCoverPhotoPath` (which removeCoverPhoto
+        // clears to null before save() runs).
+        const previousCoverPath = this.savedCoverPhotoPath();
+
         const coverPhotoPath = file
           ? await this.storageService.uploadCoverPhoto(file, author.uid)
           : this.existingCoverPhotoPath();
@@ -249,6 +266,9 @@ export class RecipeEditorPage {
         const editingId = this.recipeId();
         if (editingId) {
           await this.recipeService.updateRecipe(editingId, draft);
+          // Firestore write succeeded — delete the orphaned Storage object if
+          // the cover was replaced or removed. Never block navigation on failure.
+          await this.deleteOrphanedCoverIfSafe(previousCoverPath, coverPhotoPath, editingId);
           await this.router.navigateByUrl(`/recipes/${editingId}`);
         } else {
           const newRecipeId = await this.recipeService.createRecipe(draft, author);
@@ -258,5 +278,53 @@ export class RecipeEditorPage {
         this.isSaving.set(false);
       }
     });
+  }
+
+  /**
+   * After a successful recipe update, delete the previous cover Storage object
+   * if it is no longer referenced by this recipe and no other recipe owned by
+   * the current user still references it (same-owner reference guard).
+   *
+   * Ordering invariant: Firestore write first, Storage delete second.
+   * Failures are swallowed so navigation is never blocked.
+   */
+  private async deleteOrphanedCoverIfSafe(
+    previousPath: string | null,
+    newPath: string | null,
+    recipeId: string,
+  ): Promise<void> {
+    if (!previousPath || previousPath === newPath) {
+      return; // nothing to delete (no previous cover, or cover unchanged)
+    }
+    try {
+      const userId = this.session.user()?.uid;
+      if (!userId) {
+        return;
+      }
+      const isStillReferenced = await this.isCoverReferencedByOtherOwnedRecipe(previousPath, recipeId, userId);
+      if (isStillReferenced) {
+        return; // another owned recipe still uses this object — skip delete
+      }
+      await this.storageService.deleteCoverPhoto(previousPath);
+    } catch (error) {
+      console.error('[RecipeEditorPage] Failed to delete orphaned cover photo:', error);
+      // Never block navigation — a rare orphan is acceptable
+    }
+  }
+
+  /**
+   * Check whether any other recipe owned by `userId` (excluding `excludeRecipeId`)
+   * still references `coverPhotoPath`. Uses in-memory filtering over `listMyRecipes`
+   * so no composite Firestore index is needed.
+   */
+  private async isCoverReferencedByOtherOwnedRecipe(
+    coverPhotoPath: string,
+    excludeRecipeId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const ownedRecipes = await this.recipeService.listMyRecipes(userId);
+    return ownedRecipes.some(
+      (recipe) => recipe.recipeId !== excludeRecipeId && recipe.coverPhotoPath === coverPhotoPath,
+    );
   }
 }

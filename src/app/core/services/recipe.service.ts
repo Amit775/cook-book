@@ -20,6 +20,7 @@ import {
 import { FIRESTORE } from '../firebase/firebase.providers';
 import { Ingredient } from '../models/ingredient.model';
 import { Recipe, RecipeDraft } from '../models/recipe.model';
+import { StorageService } from './storage.service';
 
 /**
  * Reads and writes recipe documents in the `recipes` collection. Stateless —
@@ -28,6 +29,7 @@ import { Recipe, RecipeDraft } from '../models/recipe.model';
 @Injectable({ providedIn: 'root' })
 export class RecipeService {
   private readonly firestore = inject(FIRESTORE);
+  private readonly storageService = inject(StorageService);
   private readonly recipesCollection = collection(this.firestore, 'recipes');
   private readonly shareLinksCollection = collection(this.firestore, 'shareLinks');
 
@@ -98,10 +100,22 @@ export class RecipeService {
 
   /**
    * Clone `source` into a new recipe owned by `cloner`. The clone keeps the
-   * family's `rootId`, links back via `parentId`, and starts `private`. Returns
-   * the new id.
+   * family's `rootId`, links back via `parentId`, and starts `private`.
+   *
+   * When the source has a cover photo, the object is COPIED to a new Storage
+   * path under the cloner's own prefix so the clone owns its object
+   * independently — deleting the parent's cover will never break the clone's
+   * image. If the copy fails (source missing / read error) the clone is still
+   * created but without a cover.
+   *
+   * Returns the new recipe id.
    */
   async cloneRecipe(source: Recipe, cloner: User): Promise<string> {
+    // Copy cover photo before writing Firestore doc so the clone owns its object.
+    const clonedCoverPhotoPath = source.coverPhotoPath
+      ? await this.storageService.copyCoverPhoto(source.coverPhotoPath, cloner.uid)
+      : null;
+
     const reference = doc(this.recipesCollection);
     await setDoc(reference, {
       title: source.title,
@@ -120,7 +134,7 @@ export class RecipeService {
       servings: source.servings,
       prepTime: source.prepTime,
       cookTime: source.cookTime,
-      coverPhotoPath: source.coverPhotoPath,
+      coverPhotoPath: clonedCoverPhotoPath,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
