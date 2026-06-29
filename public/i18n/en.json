@@ -6,7 +6,8 @@
     "browse": "Browse",
     "create": "New recipe",
     "library": "My library",
-    "shoppingList": "Shopping list"
+    "shoppingList": "Shopping list",
+    "mealPlanner": "Meal planner"
   },
   "actions": {
     "toggleLanguage": "עברית",
@@ -182,6 +183,34 @@
     "clearConfirm": "Clear all items? This can't be undone.",
     "itemCountOne": "1 item",
     "itemCountOther": "{{count}} items"
+  },
+  "mealPlanner": {
+    "heading": "Weekly meal planner",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "thisWeek": "This week",
+    "weekOf": "Week of {{range}}",
+    "today": "Today",
+    "day": {
+      "sunday": "Sunday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday"
+    },
+    "addRecipe": "Add recipe",
+    "addToPlan": "Add to meal plan",
+    "addedToDay": "Added to {{day}}",
+    "removeRecipe": "Remove {{title}} from {{day}}",
+    "emptyDay": "Nothing planned.",
+    "emptyWeek": "No recipes planned this week.",
+    "noRecipesToAdd": "No recipes in your collection yet.",
+    "generateList": "Create shopping list from this week",
+    "generatedList": "Created shopping list «{{listName}}»",
+    "recipeCountOne": "1 recipe",
+    "recipeCountOther": "{{count}} recipes"
   },
   "search": {
     "label": "Search recipes",

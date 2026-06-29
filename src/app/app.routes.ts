@@ -30,6 +30,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/shopping-list/shopping-list-page').then((m) => m.ShoppingListPage),
   },
   {
+    path: 'meal-planner',
+    loadComponent: () => import('./features/meal-planner/meal-planner-page').then((m) => m.MealPlannerPage),
+  },
+  {
     path: 'login',
     loadComponent: () => import('./features/auth/login-page').then((m) => m.LoginPage),
   },

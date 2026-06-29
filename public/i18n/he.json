@@ -6,7 +6,8 @@
     "browse": "עיון",
     "create": "מתכון חדש",
     "library": "הספרייה שלי",
-    "shoppingList": "רשימת קניות"
+    "shoppingList": "רשימת קניות",
+    "mealPlanner": "תכנון ארוחות"
   },
   "actions": {
     "toggleLanguage": "English",
@@ -182,6 +183,34 @@
     "clearConfirm": "לנקות את כל הפריטים ברשימה? לא ניתן לבטל.",
     "itemCountOne": "פריט אחד",
     "itemCountOther": "{{count}} פריטים"
+  },
+  "mealPlanner": {
+    "heading": "תכנון ארוחות שבועי",
+    "previousWeek": "שבוע קודם",
+    "nextWeek": "שבוע הבא",
+    "thisWeek": "השבוע",
+    "weekOf": "שבוע {{range}}",
+    "today": "היום",
+    "day": {
+      "sunday": "ראשון",
+      "monday": "שני",
+      "tuesday": "שלישי",
+      "wednesday": "רביעי",
+      "thursday": "חמישי",
+      "friday": "שישי",
+      "saturday": "שבת"
+    },
+    "addRecipe": "הוספת מתכון",
+    "addToPlan": "הוספה לתכנון ארוחות",
+    "addedToDay": "נוסף ל{{day}}",
+    "removeRecipe": "הסרת {{title}} מ{{day}}",
+    "emptyDay": "אין מתכונים מתוכננים.",
+    "emptyWeek": "אין מתכונים מתוכננים השבוע.",
+    "noRecipesToAdd": "אין מתכונים בספרייה שלך עדיין.",
+    "generateList": "יצירת רשימת קניות מהשבוע",
+    "generatedList": "רשימת הקניות «{{listName}}» נוצרה",
+    "recipeCountOne": "מתכון אחד",
+    "recipeCountOther": "{{count}} מתכונים"
   },
   "search": {
     "label": "חיפוש מתכונים",
