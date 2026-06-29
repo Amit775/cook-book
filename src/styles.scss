@@ -742,3 +742,119 @@ h3 {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
+
+/* ─── Shopping list page ────────────────────────────────────────────────────── */
+
+.shopping-list-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block-end: 1.25rem;
+}
+
+.new-list-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+}
+
+.shopping-list-header {
+  margin-block: 0.75rem 1rem;
+}
+
+.list-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.rename-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.clear-list-row {
+  margin-block-end: 1rem;
+}
+
+/* Empty-state paragraph used on no-lists and empty-list states. */
+.empty-state {
+  color: var(--color-text-muted);
+  margin-block: 1.5rem 0;
+}
+
+/* ─── Shopping list checklist ───────────────────────────────────────────────── */
+
+.shopping-list-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.shopping-list-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  transition: opacity 0.15s;
+}
+
+/* Checked state: line-through + muted text + reduced opacity.
+   Visible difference is NOT colour alone (line-through + opacity satisfy WCAG 1.4.11). */
+.shopping-list-item.is-checked {
+  opacity: 0.6;
+}
+
+.item-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  cursor: pointer;
+  inline-size: 100%;
+  /* Stretch to fill the li so the whole row is clickable. */
+  box-sizing: border-box;
+}
+
+.item-label input[type='checkbox'] {
+  flex-shrink: 0;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  accent-color: var(--color-accent);
+  /* Align checkbox to the centre of the first text line. */
+  align-self: center;
+}
+
+.item-name {
+  flex: 1;
+}
+
+/* Apply line-through on the label text when checked (not via colour alone). */
+.shopping-list-item.is-checked .item-name {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.item-amount {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shopping-list-item.is-checked .item-amount {
+  color: var(--color-text-muted);
+}
+
+/* ─── Add-to-list confirmation (recipe detail page) ─────────────────────────── */
+
+.add-to-list-confirmation {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}

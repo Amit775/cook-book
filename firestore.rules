@@ -27,6 +27,11 @@ service cloud.firestore {
       match /collections/{collectionId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Private shopping lists, owned by the user.
+      match /shoppingLists/{listId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Share links: an unguessable token -> recipe id, for "anyone with the link".

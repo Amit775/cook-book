@@ -10,6 +10,7 @@ import { RecipeService } from '../../core/services/recipe.service';
 import { StorageService } from '../../core/services/storage.service';
 import { LibraryStore } from '../../core/state/library.store';
 import { SessionStore } from '../../core/state/session.store';
+import { ShoppingListStore } from '../../core/state/shopping-list.store';
 import { RecipeCard } from '../../shared/recipe-card/recipe-card';
 import { SaveRecipeButton } from '../../shared/save-recipe-button/save-recipe-button';
 import { RecipeShare } from './recipe-share';
@@ -114,6 +115,61 @@ let nextDetailPageId = 0;
             </div>
           }
 
+          <!-- Add to shopping list picker -->
+          <div class="add-to-collection-row">
+            <label [for]="ids.shoppingListSelect" class="visually-hidden">
+              {{ t('shoppingList.addToList') }}
+            </label>
+            <select
+              [id]="ids.shoppingListSelect"
+              class="search-bar-select"
+              [value]="selectedShoppingListId()"
+              (change)="onShoppingListSelectChange($event, recipe)"
+              [attr.aria-label]="t('shoppingList.addToList')"
+            >
+              <option value="">{{ t('shoppingList.addToList') }}</option>
+              @for (shoppingList of shoppingLists(); track shoppingList.listId) {
+                <option [value]="shoppingList.listId">{{ shoppingList.name }}</option>
+              }
+              <option value="__new__">{{ t('shoppingList.newOption') }}</option>
+            </select>
+            @if (addedToListName()) {
+              <span aria-live="polite" class="add-to-list-confirmation">
+                {{ t('shoppingList.added', { listName: addedToListName() }) }}
+              </span>
+            }
+          </div>
+
+          <!-- Inline new shopping list form -->
+          @if (showingNewShoppingListForm()) {
+            <div class="new-collection-inline">
+              <label [for]="ids.newShoppingListInput" class="visually-hidden">
+                {{ t('shoppingList.newListPlaceholder') }}
+              </label>
+              <input
+                [id]="ids.newShoppingListInput"
+                type="text"
+                class="collection-name-input"
+                [placeholder]="t('shoppingList.newListPlaceholder')"
+                [value]="newShoppingListName()"
+                (input)="newShoppingListName.set(getInputValue($event))"
+                (keydown.enter)="createAndAddToShoppingList(recipe)"
+                (keydown.escape)="cancelNewShoppingList()"
+              />
+              <button
+                type="button"
+                class="button button--primary"
+                [disabled]="newShoppingListName().trim().length < 2 || isCreatingShoppingList()"
+                (click)="createAndAddToShoppingList(recipe)"
+              >
+                {{ t('shoppingList.createList') }}
+              </button>
+              <button type="button" class="button" (click)="cancelNewShoppingList()">
+                {{ t('actions.cancel') }}
+              </button>
+            </div>
+          }
+
           @if (confirmingDelete()) {
             <div class="delete-confirm" role="alertdialog" aria-live="assertive">
               <p>{{ t('recipeDetail.deleteConfirm') }}</p>
@@ -201,6 +257,7 @@ export class RecipeDetailPage implements OnInit {
   private readonly storageService = inject(StorageService);
   private readonly session = inject(SessionStore);
   private readonly libraryStore = inject(LibraryStore);
+  private readonly shoppingListStore = inject(ShoppingListStore);
   private readonly router = inject(Router);
 
   /** Bound from the `:recipeId` route parameter (withComponentInputBinding). */
@@ -219,11 +276,22 @@ export class RecipeDetailPage implements OnInit {
   protected readonly isCreatingCollection = signal(false);
   protected readonly addingToCollection = signal(false);
 
+  // Shopping list picker state
+  protected readonly shoppingLists = this.shoppingListStore.lists;
+  protected readonly selectedShoppingListId = signal('');
+  protected readonly showingNewShoppingListForm = signal(false);
+  protected readonly newShoppingListName = signal('');
+  protected readonly isCreatingShoppingList = signal(false);
+  /** Name of the list last added to (shown in the aria-live confirmation). Cleared after 3 s. */
+  protected readonly addedToListName = signal<string | null>(null);
+
   /** Stable unique id prefix for label associations. */
   private readonly uid = `recipe-detail-${nextDetailPageId++}`;
   protected readonly ids = {
     collectionSelect: `${this.uid}-collection-select`,
     newCollectionInput: `${this.uid}-new-collection`,
+    shoppingListSelect: `${this.uid}-shopping-list-select`,
+    newShoppingListInput: `${this.uid}-new-shopping-list`,
   };
 
   protected readonly recipeResource = resource({
@@ -284,7 +352,13 @@ export class RecipeDetailPage implements OnInit {
       await Promise.all([
         this.libraryStore.loadSaved(),
         this.libraryStore.loadCollections(),
+        this.shoppingListStore.loadLists(),
       ]);
+      // Pre-select the last-used list if available.
+      const lastListId = this.shoppingListStore.activeListId();
+      if (lastListId) {
+        this.selectedShoppingListId.set(lastListId);
+      }
     }
   }
 
@@ -401,6 +475,61 @@ export class RecipeDetailPage implements OnInit {
       this.cancelNewCollection();
     } finally {
       this.isCreatingCollection.set(false);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Shopping list picker
+  // ---------------------------------------------------------------------------
+
+  protected onShoppingListSelectChange(event: Event, recipe: Recipe): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value === '__new__') {
+      this.showingNewShoppingListForm.set(true);
+      this.selectedShoppingListId.set('');
+      (event.target as HTMLSelectElement).value = '';
+    } else if (value) {
+      this.selectedShoppingListId.set(value);
+      void this.addToShoppingList(value, recipe);
+      (event.target as HTMLSelectElement).value = '';
+      this.selectedShoppingListId.set('');
+    }
+  }
+
+  private async addToShoppingList(listId: string, recipe: Recipe): Promise<void> {
+    await this.shoppingListStore.addRecipeToList(listId, recipe, this.targetServings() ?? recipe.servings ?? 1);
+    // Record last-used list and show confirmation.
+    this.shoppingListStore.setActiveList(listId);
+    const list = this.shoppingListStore.lists().find((l) => l.listId === listId);
+    if (list) {
+      this.addedToListName.set(list.name);
+      // Clear confirmation after 3 seconds.
+      setTimeout(() => this.addedToListName.set(null), 3000);
+    }
+  }
+
+  protected cancelNewShoppingList(): void {
+    this.showingNewShoppingListForm.set(false);
+    this.newShoppingListName.set('');
+  }
+
+  protected async createAndAddToShoppingList(recipe: Recipe): Promise<void> {
+    const name = this.newShoppingListName().trim();
+    if (name.length < 2) {
+      return;
+    }
+    this.isCreatingShoppingList.set(true);
+    try {
+      const listId = await this.shoppingListStore.createList(name);
+      await this.shoppingListStore.addRecipeToList(listId, recipe, this.targetServings() ?? recipe.servings ?? 1);
+      const list = this.shoppingListStore.lists().find((l) => l.listId === listId);
+      if (list) {
+        this.addedToListName.set(list.name);
+        setTimeout(() => this.addedToListName.set(null), 3000);
+      }
+      this.cancelNewShoppingList();
+    } finally {
+      this.isCreatingShoppingList.set(false);
     }
   }
 }

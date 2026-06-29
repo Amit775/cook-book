@@ -15,6 +15,7 @@ vi.mock('firebase/firestore', () => ({
   deleteDoc: vi.fn(() => Promise.resolve()),
   updateDoc: vi.fn(() => Promise.resolve()),
   getDocs: vi.fn(() => Promise.resolve({ docs: [] })),
+  getDoc: vi.fn(() => Promise.resolve({ exists: () => false })),
   orderBy: vi.fn(() => ({})),
   query: vi.fn(() => ({})),
   serverTimestamp: vi.fn(() => null),
@@ -28,6 +29,8 @@ import { RecipeService } from '../../core/services/recipe.service';
 import { StorageService } from '../../core/services/storage.service';
 import { LibraryStore } from '../../core/state/library.store';
 import { SessionStore } from '../../core/state/session.store';
+import { ShoppingList } from '../../core/models/shopping-list.model';
+import { ShoppingListStore } from '../../core/state/shopping-list.store';
 import { RecipeDetailPage } from './recipe-detail-page';
 
 // Blank component used as a catch-all route so navigateByUrl('/library') and
@@ -72,6 +75,11 @@ class StubLoader implements TranslocoLoader {
       'share.createHint': 'Create a link',
       'share.createLink': 'Create link',
       'share.noOne': 'No one',
+      'shoppingList.addToList': 'Add to shopping list',
+      'shoppingList.newOption': 'New list…',
+      'shoppingList.added': 'Added to «{{listName}}»',
+      'shoppingList.newListPlaceholder': 'New list name',
+      'shoppingList.createList': 'Create list',
     });
   }
 }
@@ -125,12 +133,33 @@ function makeLibraryStoreStub(savedIds: string[] = []) {
   };
 }
 
+function makeShoppingListStoreStub() {
+  return {
+    lists: signal<ShoppingList[]>([]),
+    activeListId: signal<string | null>(null),
+    isLoading: signal(false),
+    activeList: () => null,
+    displayItems: () => [],
+    itemCount: () => 0,
+    uncheckedCount: () => 0,
+    loadLists: vi.fn(async () => {}),
+    setActiveList: vi.fn(),
+    createList: vi.fn(async () => 'new-list-id'),
+    renameList: vi.fn(async () => {}),
+    deleteList: vi.fn(async () => {}),
+    addRecipeToList: vi.fn(async () => {}),
+    toggleItem: vi.fn(async () => {}),
+    clearActiveList: vi.fn(async () => {}),
+  };
+}
+
 describe('RecipeDetailPage — add-to-collection select visibility', () => {
   let fixture: ComponentFixture<RecipeDetailPage>;
 
   async function setup(authenticated: boolean): Promise<void> {
     const sessionStoreStub = makeSessionStoreStub(authenticated);
     const libraryStoreStub = makeLibraryStoreStub();
+    const shoppingListStoreStub = makeShoppingListStoreStub();
     const recipeServiceStub = {
       getRecipe: vi.fn(async () => makeRecipe()),
       listVersions: vi.fn(async () => []),
@@ -151,6 +180,7 @@ describe('RecipeDetailPage — add-to-collection select visibility', () => {
         }),
         { provide: SessionStore, useValue: sessionStoreStub },
         { provide: LibraryStore, useValue: libraryStoreStub },
+        { provide: ShoppingListStore, useValue: shoppingListStoreStub },
         { provide: RecipeService, useValue: recipeServiceStub },
         { provide: StorageService, useValue: storageServiceStub },
         { provide: FIRESTORE, useValue: {} },
@@ -230,6 +260,7 @@ describe('RecipeDetailPage — orphaned cover cleanup on delete', () => {
     };
     const sessionStoreStub = makeSessionStoreStub(true);
     const libraryStoreStub = makeLibraryStoreStub();
+    const shoppingListStoreStub = makeShoppingListStoreStub();
 
     await TestBed.configureTestingModule({
       imports: [RecipeDetailPage],
@@ -241,6 +272,7 @@ describe('RecipeDetailPage — orphaned cover cleanup on delete', () => {
         }),
         { provide: SessionStore, useValue: sessionStoreStub },
         { provide: LibraryStore, useValue: libraryStoreStub },
+        { provide: ShoppingListStore, useValue: shoppingListStoreStub },
         { provide: RecipeService, useValue: recipeServiceStub },
         { provide: StorageService, useValue: storageServiceStub },
         { provide: FIRESTORE, useValue: {} },
@@ -311,5 +343,97 @@ describe('RecipeDetailPage — orphaned cover cleanup on delete', () => {
     await fixture.componentInstance.confirmDelete(recipe);
 
     expect(navigateSpy).toHaveBeenCalledWith('/library');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// RecipeDetailPage — add-to-shopping-list picker
+// ---------------------------------------------------------------------------
+
+describe('RecipeDetailPage — add-to-shopping-list picker', () => {
+  let fixture: ComponentFixture<RecipeDetailPage>;
+  let shoppingListStoreStub: ReturnType<typeof makeShoppingListStoreStub>;
+
+  async function setup(authenticated: boolean): Promise<void> {
+    shoppingListStoreStub = makeShoppingListStoreStub();
+    const sessionStoreStub = makeSessionStoreStub(authenticated);
+    const libraryStoreStub = makeLibraryStoreStub();
+    const recipeServiceStub = {
+      getRecipe: vi.fn(async () => makeRecipe()),
+      listVersions: vi.fn(async () => []),
+      cloneRecipe: vi.fn(async () => 'new-recipe-id'),
+      deleteRecipe: vi.fn(async () => {}),
+      listMyRecipes: vi.fn(async () => []),
+    };
+    const storageServiceStub = {
+      getPhotoUrl: vi.fn(async () => ''),
+      deleteCoverPhoto: vi.fn(async () => {}),
+      copyCoverPhoto: vi.fn(async () => null),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [RecipeDetailPage],
+      providers: [
+        provideRouter([]),
+        provideTransloco({
+          config: { availableLangs: ['en'], defaultLang: 'en', reRenderOnLangChange: false },
+          loader: StubLoader,
+        }),
+        { provide: SessionStore, useValue: sessionStoreStub },
+        { provide: LibraryStore, useValue: libraryStoreStub },
+        { provide: ShoppingListStore, useValue: shoppingListStoreStub },
+        { provide: RecipeService, useValue: recipeServiceStub },
+        { provide: StorageService, useValue: storageServiceStub },
+        { provide: FIRESTORE, useValue: {} },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(RecipeDetailPage);
+    fixture.componentRef.setInput('recipeId', 'recipe1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('shows the add-to-shopping-list select when signed in', async () => {
+    await setup(true);
+    const selects: NodeList = fixture.nativeElement.querySelectorAll('select');
+    // There are two selects: collections and shopping list
+    expect(selects.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('does not show add-to-list section when not signed in', async () => {
+    await setup(false);
+    // No selects at all when unauthenticated
+    const selects: NodeList = fixture.nativeElement.querySelectorAll('select');
+    expect(selects.length).toBe(0);
+  });
+
+  it('shopping list select includes the "New list…" sentinel option', async () => {
+    await setup(true);
+    const selects: NodeList = fixture.nativeElement.querySelectorAll('select');
+    // Second select is the shopping list picker
+    const shoppingListSelect = selects[1] as HTMLSelectElement;
+    const options = Array.from(shoppingListSelect.options);
+    expect(options.some((opt) => opt.value === '__new__')).toBe(true);
+  });
+
+  it('calls addRecipeToList when an existing list is selected', async () => {
+    await setup(true);
+    // Set list AFTER setup so the existing stub is used (setup() reassigns shoppingListStoreStub)
+    shoppingListStoreStub.lists.set([
+      { listId: 'list1', name: 'Groceries', items: [], isManuallyOrdered: false, createdAt: new Date(), updatedAt: new Date() },
+    ]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const selects: NodeList = fixture.nativeElement.querySelectorAll('select');
+    const shoppingListSelect = selects[1] as HTMLSelectElement;
+    shoppingListSelect.value = 'list1';
+    shoppingListSelect.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(shoppingListStoreStub.addRecipeToList).toHaveBeenCalledWith('list1', expect.any(Object), expect.any(Number));
   });
 });
