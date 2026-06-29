@@ -3,12 +3,14 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { parseDurationToMinutes } from '../../core/models/duration.model';
+import { PlannedRecipe } from '../../core/models/meal-plan.model';
 import { formatQuantity, scaleQuantity } from '../../core/models/quantity.model';
 import { Recipe } from '../../core/models/recipe.model';
 import { isRecipeUnit } from '../../core/models/recipe-unit.model';
 import { RecipeService } from '../../core/services/recipe.service';
 import { StorageService } from '../../core/services/storage.service';
 import { LibraryStore } from '../../core/state/library.store';
+import { MealPlanStore } from '../../core/state/meal-plan.store';
 import { SessionStore } from '../../core/state/session.store';
 import { ShoppingListStore } from '../../core/state/shopping-list.store';
 import { RecipeCard } from '../../shared/recipe-card/recipe-card';
@@ -16,6 +18,9 @@ import { SaveRecipeButton } from '../../shared/save-recipe-button/save-recipe-bu
 import { RecipeShare } from './recipe-share';
 
 let nextDetailPageId = 0;
+
+/** Day-of-week index → Transloco key suffix (mirrored from meal-planner-page). */
+const DETAIL_PAGE_DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
 @Component({
   selector: 'app-recipe-detail-page',
@@ -170,6 +175,33 @@ let nextDetailPageId = 0;
             </div>
           }
 
+          <!-- Add to meal plan picker -->
+          <div class="add-to-collection-row">
+            <label [for]="ids.mealPlanSelect" class="visually-hidden">
+              {{ t('mealPlanner.addToPlan') }}
+            </label>
+            <select
+              [id]="ids.mealPlanSelect"
+              class="search-bar-select"
+              [value]="selectedMealPlanDay()"
+              (change)="onMealPlanSelectChange($event, recipe)"
+              [attr.aria-label]="t('mealPlanner.addToPlan')"
+            >
+              <option value="">{{ t('mealPlanner.addToPlan') }}</option>
+              @for (dateString of mealPlanWeekDates(); track dateString) {
+                <option [value]="dateString">
+                  {{ t('mealPlanner.day.' + mealPlanDayKey(dateString)) }}
+                  {{ mealPlanDayNumber(dateString) }}
+                </option>
+              }
+            </select>
+            @if (addedToMealPlanDay()) {
+              <span aria-live="polite" class="add-to-list-confirmation">
+                {{ t('mealPlanner.addedToDay', { day: addedToMealPlanDay() }) }}
+              </span>
+            }
+          </div>
+
           @if (confirmingDelete()) {
             <div class="delete-confirm" role="alertdialog" aria-live="assertive">
               <p>{{ t('recipeDetail.deleteConfirm') }}</p>
@@ -258,6 +290,7 @@ export class RecipeDetailPage implements OnInit {
   private readonly session = inject(SessionStore);
   private readonly libraryStore = inject(LibraryStore);
   private readonly shoppingListStore = inject(ShoppingListStore);
+  private readonly mealPlanStore = inject(MealPlanStore);
   private readonly router = inject(Router);
 
   /** Bound from the `:recipeId` route parameter (withComponentInputBinding). */
@@ -285,6 +318,12 @@ export class RecipeDetailPage implements OnInit {
   /** Name of the list last added to (shown in the aria-live confirmation). Cleared after 3 s. */
   protected readonly addedToListName = signal<string | null>(null);
 
+  // Meal plan picker state
+  protected readonly mealPlanWeekDates = this.mealPlanStore.weekDatesComputed;
+  protected readonly selectedMealPlanDay = signal('');
+  /** Localized day name of the day last added to (shown in the aria-live confirmation). */
+  protected readonly addedToMealPlanDay = signal<string | null>(null);
+
   /** Stable unique id prefix for label associations. */
   private readonly uid = `recipe-detail-${nextDetailPageId++}`;
   protected readonly ids = {
@@ -292,6 +331,7 @@ export class RecipeDetailPage implements OnInit {
     newCollectionInput: `${this.uid}-new-collection`,
     shoppingListSelect: `${this.uid}-shopping-list-select`,
     newShoppingListInput: `${this.uid}-new-shopping-list`,
+    mealPlanSelect: `${this.uid}-meal-plan-select`,
   };
 
   protected readonly recipeResource = resource({
@@ -353,6 +393,7 @@ export class RecipeDetailPage implements OnInit {
         this.libraryStore.loadSaved(),
         this.libraryStore.loadCollections(),
         this.shoppingListStore.loadLists(),
+        this.mealPlanStore.loadWeek(),
       ]);
       // Pre-select the last-used list if available.
       const lastListId = this.shoppingListStore.activeListId();
@@ -531,5 +572,46 @@ export class RecipeDetailPage implements OnInit {
     } finally {
       this.isCreatingShoppingList.set(false);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Meal plan picker
+  // ---------------------------------------------------------------------------
+
+  protected mealPlanDayKey(dateString: string): string {
+    const [year, month, day] = dateString.split('-').map(Number);
+    const dayIndex = new Date(year, month - 1, day).getDay();
+    return DETAIL_PAGE_DAY_KEYS[dayIndex] ?? 'sunday';
+  }
+
+  protected mealPlanDayNumber(dateString: string): string {
+    const [, , day] = dateString.split('-');
+    return String(Number(day));
+  }
+
+  protected onMealPlanSelectChange(event: Event, recipe: Recipe): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value) {
+      this.selectedMealPlanDay.set(value);
+      void this.addToMealPlan(value, recipe);
+      // Reset select to placeholder.
+      (event.target as HTMLSelectElement).value = '';
+      this.selectedMealPlanDay.set('');
+    }
+  }
+
+  private async addToMealPlan(dateString: string, recipe: Recipe): Promise<void> {
+    const planned: PlannedRecipe = {
+      recipeId: recipe.recipeId,
+      title: recipe.title,
+      coverPhotoPath: recipe.coverPhotoPath,
+      type: recipe.type,
+      servings: this.targetServings() ?? recipe.servings,
+    };
+    await this.mealPlanStore.assignRecipe(dateString, planned);
+    const dayKey = this.mealPlanDayKey(dateString);
+    // We show the day key as the confirmation label (localized on the template side).
+    this.addedToMealPlanDay.set(dayKey);
+    setTimeout(() => this.addedToMealPlanDay.set(null), 3000);
   }
 }

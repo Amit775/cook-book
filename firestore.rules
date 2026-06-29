@@ -32,6 +32,11 @@ service cloud.firestore {
       match /shoppingLists/{listId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Private weekly meal plans, owned by the user.
+      match /mealPlans/{weekStartDate} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Share links: an unguessable token -> recipe id, for "anyone with the link".
