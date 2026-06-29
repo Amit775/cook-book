@@ -197,7 +197,7 @@ const DETAIL_PAGE_DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thurs
             </select>
             @if (addedToMealPlanDay()) {
               <span aria-live="polite" class="add-to-list-confirmation">
-                {{ t('mealPlanner.addedToDay', { day: addedToMealPlanDay() }) }}
+                {{ t('mealPlanner.addedToDay', { day: t('mealPlanner.day.' + addedToMealPlanDay()) }) }}
               </span>
             }
           </div>

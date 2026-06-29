@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, resource, signal } from '@angular/core';
+import { AfterViewChecked, Component, computed, ElementRef, inject, OnInit, resource, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { form, FormField, minLength, required } from '@angular/forms/signals';
@@ -12,6 +12,16 @@ import { ShoppingListStore } from '../../core/state/shopping-list.store';
 
 /** Day-of-week index → Transloco key suffix. */
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+
+/** CSS selector for all elements that can receive keyboard focus. */
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
 
 let nextPageId = 0;
 
@@ -121,20 +131,32 @@ let nextPageId = 0;
           }
         </ul>
 
-        <!-- In-planner recipe picker overlay -->
+        <!-- In-planner recipe picker dialog.
+             Focus management:
+               • On open: focus moves to the close button (first focusable inside).
+               • Tab / Shift+Tab cycle within focusable elements; wraps at both ends.
+               • Escape closes and restores focus to the triggering "Add recipe" button.
+               • aria-labelledby points at the heading (accessible name). -->
         @if (showingPickerForDate()) {
-          <div class="meal-planner-picker-overlay">
+          <div
+            class="meal-planner-picker-overlay"
+            (click)="onOverlayClick($event)"
+            (keydown)="onDialogKeydown($event)"
+          >
             <div
+              #pickerPanel
               class="meal-planner-picker-panel"
               role="dialog"
-              [attr.aria-label]="t('mealPlanner.addRecipe')"
+              [attr.aria-labelledby]="ids.pickerHeading"
               [attr.aria-modal]="true"
             >
-              <h2 class="meal-planner-picker-heading">{{ t('mealPlanner.addRecipe') }}</h2>
+              <h2 class="meal-planner-picker-heading" [id]="ids.pickerHeading">
+                {{ t('mealPlanner.addRecipe') }}
+              </h2>
               @if (myRecipesResource.isLoading()) {
                 <p>{{ t('common.loading') }}</p>
               } @else if (myRecipesResource.value().length === 0) {
-                <p>{{ t('mealPlanner.emptyWeek') }}</p>
+                <p>{{ t('mealPlanner.noRecipesToAdd') }}</p>
               } @else {
                 <ul class="meal-planner-picker-list">
                   @for (recipe of myRecipesResource.value(); track recipe.recipeId) {
@@ -151,7 +173,12 @@ let nextPageId = 0;
                   }
                 </ul>
               }
-              <button type="button" class="button" (click)="closePicker()">
+              <button
+                #pickerCloseButton
+                type="button"
+                class="button"
+                (click)="closePicker()"
+              >
                 {{ t('actions.cancel') }}
               </button>
             </div>
@@ -393,12 +420,17 @@ let nextPageId = 0;
     }
   `,
 })
-export class MealPlannerPage implements OnInit {
+export class MealPlannerPage implements OnInit, AfterViewChecked {
   private readonly mealPlanStore = inject(MealPlanStore);
   private readonly session = inject(SessionStore);
   private readonly shoppingListStore = inject(ShoppingListStore);
   private readonly recipeService = inject(RecipeService);
   private readonly getToday = inject(TODAY_TOKEN);
+
+  /** Reference to the dialog panel element — used for focus management. */
+  private readonly pickerPanel = viewChild<ElementRef<HTMLElement>>('pickerPanel');
+  /** Reference to the dialog's close button — receives focus on open. */
+  private readonly pickerCloseButton = viewChild<ElementRef<HTMLButtonElement>>('pickerCloseButton');
 
   protected readonly isSignedIn = this.session.isAuthenticated;
   protected readonly isLoading = this.mealPlanStore.isLoading;
@@ -412,6 +444,11 @@ export class MealPlannerPage implements OnInit {
   protected readonly showingPickerForDate = signal<string | null>(null);
   /** Which shopping list is selected for generate (defaults to "__new__"). */
   protected readonly selectedGenerateListId = signal('__new__');
+
+  /** Tracks whether we need to focus the dialog on the next view check. */
+  private pendingFocusDialog = false;
+  /** The element that triggered the dialog open — focus is restored here on close. */
+  private pickerTriggerElement: HTMLElement | null = null;
 
   /** "Today" as a YYYY-MM-DD string for highlighting. */
   protected readonly todayString = computed(() => {
@@ -445,6 +482,7 @@ export class MealPlannerPage implements OnInit {
   protected readonly ids = {
     generateListSelect: `${this.uid}-generate-list-select`,
     generateListNameInput: `${this.uid}-generate-list-name`,
+    pickerHeading: `${this.uid}-picker-heading`,
   };
 
   // Signal Forms for new-list-name field.
@@ -472,6 +510,23 @@ export class MealPlannerPage implements OnInit {
     }
   }
 
+  /**
+   * After each view check, if we just opened the dialog, move focus into it.
+   * Using AfterViewChecked ensures the dialog DOM is present before we focus.
+   */
+  ngAfterViewChecked(): void {
+    if (this.pendingFocusDialog) {
+      this.pendingFocusDialog = false;
+      // Focus the close button (first focusable), falling back to the panel itself.
+      const closeButton = this.pickerCloseButton()?.nativeElement;
+      if (closeButton) {
+        closeButton.focus();
+      } else {
+        this.pickerPanel()?.nativeElement.focus();
+      }
+    }
+  }
+
   protected dayKey(dateString: string): string {
     const [year, month, day] = dateString.split('-').map(Number);
     const dayIndex = new Date(year, month - 1, day).getDay();
@@ -496,11 +551,72 @@ export class MealPlannerPage implements OnInit {
   }
 
   protected openPicker(dateString: string): void {
+    // Remember the triggering button so focus can be restored on close.
+    this.pickerTriggerElement = document.getElementById(this.addButtonId(dateString));
     this.showingPickerForDate.set(dateString);
+    // Schedule focus-move for the next view check (after dialog renders).
+    this.pendingFocusDialog = true;
   }
 
   protected closePicker(): void {
     this.showingPickerForDate.set(null);
+    // Restore focus to the button that opened the dialog.
+    if (this.pickerTriggerElement) {
+      this.pickerTriggerElement.focus();
+      this.pickerTriggerElement = null;
+    }
+  }
+
+  /**
+   * Close the dialog when the semi-transparent overlay (outside the panel) is clicked.
+   */
+  protected onOverlayClick(event: MouseEvent): void {
+    const panel = this.pickerPanel()?.nativeElement;
+    if (panel && !panel.contains(event.target as Node)) {
+      this.closePicker();
+    }
+  }
+
+  /**
+   * Handle keyboard events inside the dialog:
+   * - Escape → close.
+   * - Tab / Shift+Tab → cycle focus within focusable elements (focus trap).
+   */
+  protected onDialogKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closePicker();
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      const panel = this.pickerPanel()?.nativeElement;
+      if (!panel) {
+        return;
+      }
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const firstFocusable = focusable[0];
+      const lastFocusable = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement;
+
+      if (event.shiftKey) {
+        // Shift+Tab: if focus is on or before the first element, wrap to last.
+        if (active === firstFocusable || !panel.contains(active)) {
+          event.preventDefault();
+          lastFocusable.focus();
+        }
+      } else {
+        // Tab: if focus is on or after the last element, wrap to first.
+        if (active === lastFocusable || !panel.contains(active)) {
+          event.preventDefault();
+          firstFocusable.focus();
+        }
+      }
+    }
   }
 
   protected async pickRecipe(recipe: Recipe): Promise<void> {
