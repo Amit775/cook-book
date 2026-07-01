@@ -17,10 +17,13 @@ vi.mock('firebase/firestore', () => ({
   getDocs: vi.fn(() => Promise.resolve({ docs: [] })),
   getDoc: vi.fn(() => Promise.resolve({ exists: () => false })),
   orderBy: vi.fn(() => ({})),
+  limit: vi.fn(() => ({})),
   query: vi.fn(() => ({})),
+  runTransaction: vi.fn(() => Promise.resolve()),
   serverTimestamp: vi.fn(() => null),
   arrayUnion: vi.fn((...args: unknown[]) => args),
   arrayRemove: vi.fn((...args: unknown[]) => args),
+  Timestamp: class {},
 }));
 
 import { FIRESTORE } from '../../core/firebase/firebase.providers';
@@ -28,6 +31,7 @@ import { Recipe } from '../../core/models/recipe.model';
 import { RecipeService } from '../../core/services/recipe.service';
 import { StorageService } from '../../core/services/storage.service';
 import { LibraryStore } from '../../core/state/library.store';
+import { RatingStore } from '../../core/state/rating.store';
 import { SessionStore } from '../../core/state/session.store';
 import { ShoppingList } from '../../core/models/shopping-list.model';
 import { ShoppingListStore } from '../../core/state/shopping-list.store';
@@ -80,6 +84,23 @@ class StubLoader implements TranslocoLoader {
       'shoppingList.added': 'Added to «{{listName}}»',
       'shoppingList.newListPlaceholder': 'New list name',
       'shoppingList.createList': 'Create list',
+      'rating.sectionTitle': 'Ratings & reviews',
+      'rating.average': '{{average}} out of 5',
+      'rating.countOne': '1 rating',
+      'rating.countOther': '{{count}} ratings',
+      'rating.noRatings': 'No ratings yet',
+      'rating.yourRating': 'Your rating',
+      'rating.rateThis': 'Rate this recipe',
+      'rating.starOne': '1 star',
+      'rating.starOther': '{{count}} stars',
+      'rating.reviewLabel': 'Review (optional)',
+      'rating.reviewPlaceholder': 'Share your thoughts...',
+      'rating.submit': 'Submit rating',
+      'rating.update': 'Update rating',
+      'rating.saving': 'Saving...',
+      'rating.saved': 'Rating saved!',
+      'rating.signInToRate': 'Sign in to rate this recipe.',
+      'rating.reviewsTitle': 'Recent reviews',
     });
   }
 }
@@ -106,6 +127,9 @@ function makeRecipe(): Recipe {
     shareId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    ratingCount: 0,
+    ratingSum: 0,
+    ratingAverage: 0,
   };
 }
 
@@ -153,6 +177,21 @@ function makeShoppingListStoreStub() {
   };
 }
 
+function makeRatingStoreStub() {
+  return {
+    isLoading: signal(false),
+    isSaving: signal(false),
+    myRating: signal(null),
+    reviews: signal([]),
+    saveAnnouncement: signal(''),
+    aggregate: signal(null),
+    errorMessage: signal(null),
+    load: vi.fn(async () => {}),
+    submit: vi.fn(async () => {}),
+    clearAnnouncement: vi.fn(),
+  };
+}
+
 describe('RecipeDetailPage — add-to-collection select visibility', () => {
   let fixture: ComponentFixture<RecipeDetailPage>;
 
@@ -160,6 +199,7 @@ describe('RecipeDetailPage — add-to-collection select visibility', () => {
     const sessionStoreStub = makeSessionStoreStub(authenticated);
     const libraryStoreStub = makeLibraryStoreStub();
     const shoppingListStoreStub = makeShoppingListStoreStub();
+    const ratingStoreStub = makeRatingStoreStub();
     const recipeServiceStub = {
       getRecipe: vi.fn(async () => makeRecipe()),
       listVersions: vi.fn(async () => []),
@@ -181,6 +221,7 @@ describe('RecipeDetailPage — add-to-collection select visibility', () => {
         { provide: SessionStore, useValue: sessionStoreStub },
         { provide: LibraryStore, useValue: libraryStoreStub },
         { provide: ShoppingListStore, useValue: shoppingListStoreStub },
+        { provide: RatingStore, useValue: ratingStoreStub },
         { provide: RecipeService, useValue: recipeServiceStub },
         { provide: StorageService, useValue: storageServiceStub },
         { provide: FIRESTORE, useValue: {} },
@@ -261,6 +302,7 @@ describe('RecipeDetailPage — orphaned cover cleanup on delete', () => {
     const sessionStoreStub = makeSessionStoreStub(true);
     const libraryStoreStub = makeLibraryStoreStub();
     const shoppingListStoreStub = makeShoppingListStoreStub();
+    const ratingStoreStub = makeRatingStoreStub();
 
     await TestBed.configureTestingModule({
       imports: [RecipeDetailPage],
@@ -273,6 +315,7 @@ describe('RecipeDetailPage — orphaned cover cleanup on delete', () => {
         { provide: SessionStore, useValue: sessionStoreStub },
         { provide: LibraryStore, useValue: libraryStoreStub },
         { provide: ShoppingListStore, useValue: shoppingListStoreStub },
+        { provide: RatingStore, useValue: ratingStoreStub },
         { provide: RecipeService, useValue: recipeServiceStub },
         { provide: StorageService, useValue: storageServiceStub },
         { provide: FIRESTORE, useValue: {} },
@@ -358,6 +401,7 @@ describe('RecipeDetailPage — add-to-shopping-list picker', () => {
     shoppingListStoreStub = makeShoppingListStoreStub();
     const sessionStoreStub = makeSessionStoreStub(authenticated);
     const libraryStoreStub = makeLibraryStoreStub();
+    const ratingStoreStub = makeRatingStoreStub();
     const recipeServiceStub = {
       getRecipe: vi.fn(async () => makeRecipe()),
       listVersions: vi.fn(async () => []),
@@ -382,6 +426,7 @@ describe('RecipeDetailPage — add-to-shopping-list picker', () => {
         { provide: SessionStore, useValue: sessionStoreStub },
         { provide: LibraryStore, useValue: libraryStoreStub },
         { provide: ShoppingListStore, useValue: shoppingListStoreStub },
+        { provide: RatingStore, useValue: ratingStoreStub },
         { provide: RecipeService, useValue: recipeServiceStub },
         { provide: StorageService, useValue: storageServiceStub },
         { provide: FIRESTORE, useValue: {} },

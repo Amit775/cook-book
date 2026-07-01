@@ -212,6 +212,26 @@
     "recipeCountOne": "1 recipe",
     "recipeCountOther": "{{count}} recipes"
   },
+  "rating": {
+    "sectionTitle": "Ratings & reviews",
+    "average": "{{average}} out of 5",
+    "countOne": "1 rating",
+    "countOther": "{{count}} ratings",
+    "noRatings": "No ratings yet",
+    "yourRating": "Your rating",
+    "rateThis": "Rate this recipe",
+    "starOne": "1 star",
+    "starOther": "{{count}} stars",
+    "reviewLabel": "Review (optional)",
+    "reviewPlaceholder": "Share your thoughts...",
+    "submit": "Submit rating",
+    "update": "Update rating",
+    "saving": "Saving...",
+    "saved": "Rating saved!",
+    "signInToRate": "Sign in to rate this recipe.",
+    "reviewsTitle": "Recent reviews",
+    "errorSave": "Could not save rating. Please try again."
+  },
   "search": {
     "label": "Search recipes",
     "placeholder": "Search by title, ingredient or tag",

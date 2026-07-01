@@ -15,6 +15,7 @@ import { SessionStore } from '../../core/state/session.store';
 import { ShoppingListStore } from '../../core/state/shopping-list.store';
 import { RecipeCard } from '../../shared/recipe-card/recipe-card';
 import { SaveRecipeButton } from '../../shared/save-recipe-button/save-recipe-button';
+import { RecipeRatingSection } from './recipe-rating-section';
 import { RecipeShare } from './recipe-share';
 
 let nextDetailPageId = 0;
@@ -24,7 +25,7 @@ const DETAIL_PAGE_DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thurs
 
 @Component({
   selector: 'app-recipe-detail-page',
-  imports: [TranslocoDirective, RouterLink, RecipeCard, RecipeShare, SaveRecipeButton],
+  imports: [TranslocoDirective, RouterLink, RecipeCard, RecipeShare, SaveRecipeButton, RecipeRatingSection],
   template: `
     <section class="page" *transloco="let t">
       @if (recipeResource.isLoading()) {
@@ -278,6 +279,8 @@ const DETAIL_PAGE_DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thurs
             </div>
           </section>
         }
+
+        <app-recipe-rating-section [recipe]="recipe" />
       } @else {
         <p>{{ t('recipeDetail.notFound') }}</p>
       }

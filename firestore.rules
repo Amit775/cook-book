@@ -72,7 +72,8 @@ service cloud.firestore {
 
     // Recipes. Read access depends on visibility; writes are author-only, except
     // a signed-in visitor may add ONLY themselves to `sharedWith` (joining via a
-    // share link).
+    // share link), or bump only the three rating aggregate fields (ratingCount,
+    // ratingSum, ratingAverage) as part of the client-side rating transaction.
     // NOTE: Firestore evaluates rules per document. List/collection queries must
     // include filters (e.g. visibility == 'public', or sharedWith contains uid)
     // that match these conditions, otherwise the whole query is rejected.
@@ -100,9 +101,23 @@ service cloud.firestore {
           && added.hasOnly(existing.concat([request.auth.uid]));
       }
 
+      // A signed-in rater (who can already read the recipe) may update ONLY the
+      // three aggregate fields that the rating transaction touches. The rating write
+      // must NOT change `updatedAt` or any other recipe field, keeping this branch
+      // unambiguous and preventing aggregate-only writes from reordering recipe lists.
+      // Accepted limitation: rules cannot cross-check the delta against the rater's
+      // individual rating doc in the same transaction (no cross-doc read in condition
+      // expressions), so a determined client could set arbitrary non-negative numbers.
+      // Tamper-proof aggregation via a callable is deferred to a future issue.
+      function isRatingAggregateWrite() {
+        return isSignedIn() && canReadRecipe()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['ratingCount', 'ratingSum', 'ratingAverage']);
+      }
+
       allow read: if canReadRecipe();
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isOwner(resource.data.authorId) || isSelfJoin();
+      allow update: if isOwner(resource.data.authorId) || isSelfJoin() || isRatingAggregateWrite();
       allow delete: if isOwner(resource.data.authorId);
 
       // Comments are public-readable; authored and editable only by their author.
@@ -110,6 +125,40 @@ service cloud.firestore {
         allow read: if true;
         allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
         allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      }
+
+      // Ratings: one doc per rater (doc id == rater uid → one-per-user structurally).
+      //
+      // IMPORTANT: inside this nested match block, `resource` refers to the rating
+      // doc itself (or is null on create), NOT to the parent recipe doc. We therefore
+      // gate access on the PARENT recipe using a cross-doc `get()` so we can evaluate
+      // the recipe's actual visibility/authorId/sharedWith fields.
+      //
+      // `canViewParentRecipe()` mirrors the logic of `canReadRecipe()` above but reads
+      // from the fetched recipe snapshot instead of `resource.data`.
+      match /ratings/{userId} {
+        function parentRecipe() {
+          return get(/databases/$(database)/documents/recipes/$(recipeId)).data;
+        }
+
+        function canViewParentRecipe() {
+          let recipe = parentRecipe();
+          return recipe.visibility == 'public'
+            || recipe.visibility == 'unlisted'
+            || (isSignedIn() && (
+                  request.auth.uid == recipe.authorId
+                  || request.auth.uid in recipe.sharedWith
+               ));
+        }
+
+        allow read: if canViewParentRecipe();
+        allow create, update: if isOwner(userId) && canViewParentRecipe()
+          && request.resource.data.authorId == userId
+          && request.resource.data.stars is int
+          && request.resource.data.stars >= 1 && request.resource.data.stars <= 5
+          && request.resource.data.reviewText is string
+          && request.resource.data.reviewText.size() <= 1000;
+        allow delete: if isOwner(userId);
       }
     }
   }
