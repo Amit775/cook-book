@@ -68,6 +68,8 @@ function makeRatingStoreStub(overrides: Partial<{
   myRating: unknown;
   reviews: unknown[];
   saveAnnouncement: string;
+  aggregate: unknown;
+  errorMessage: string | null;
 }> = {}) {
   return {
     isLoading: signal(overrides.isLoading ?? false),
@@ -75,6 +77,8 @@ function makeRatingStoreStub(overrides: Partial<{
     myRating: signal(overrides.myRating ?? null),
     reviews: signal(overrides.reviews ?? []),
     saveAnnouncement: signal(overrides.saveAnnouncement ?? ''),
+    aggregate: signal(overrides.aggregate ?? null),
+    errorMessage: signal(overrides.errorMessage ?? null),
     load: vi.fn(async () => {}),
     submit: vi.fn(async () => {}),
     clearAnnouncement: vi.fn(),
@@ -125,7 +129,8 @@ describe('RecipeRatingSection', () => {
 
   it('calls load() on ngOnChanges', async () => {
     await setup(true);
-    expect(ratingStoreStub.load).toHaveBeenCalledWith('recipe1');
+    // load() now receives the full Recipe object (not just the recipeId string)
+    expect(ratingStoreStub.load).toHaveBeenCalledWith(expect.objectContaining({ recipeId: 'recipe1' }));
   });
 
   it('shows the rating editor when signed in', async () => {

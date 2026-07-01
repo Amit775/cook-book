@@ -229,7 +229,8 @@
     "saving": "Saving...",
     "saved": "Rating saved!",
     "signInToRate": "Sign in to rate this recipe.",
-    "reviewsTitle": "Recent reviews"
+    "reviewsTitle": "Recent reviews",
+    "errorSave": "Could not save rating. Please try again."
   },
   "search": {
     "label": "Search recipes",

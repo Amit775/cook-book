@@ -215,8 +215,8 @@
   "rating": {
     "sectionTitle": "דירוגים וביקורות",
     "average": "{{average}} מתוך 5",
-    "countOne": "ביקורת אחת",
-    "countOther": "{{count}} ביקורות",
+    "countOne": "דירוג אחד",
+    "countOther": "{{count}} דירוגים",
     "noRatings": "אין דירוגים עדיין",
     "yourRating": "הדירוג שלך",
     "rateThis": "דרגו את המתכון",
@@ -229,7 +229,8 @@
     "saving": "שומר...",
     "saved": "הדירוג נשמר!",
     "signInToRate": "התחברו כדי לדרג את המתכון.",
-    "reviewsTitle": "ביקורות אחרונות"
+    "reviewsTitle": "ביקורות אחרונות",
+    "errorSave": "לא ניתן היה לשמור את הדירוג. נסו שוב."
   },
   "search": {
     "label": "חיפוש מתכונים",

@@ -184,6 +184,8 @@ function makeRatingStoreStub() {
     myRating: signal(null),
     reviews: signal([]),
     saveAnnouncement: signal(''),
+    aggregate: signal(null),
+    errorMessage: signal(null),
     load: vi.fn(async () => {}),
     submit: vi.fn(async () => {}),
     clearAnnouncement: vi.fn(),

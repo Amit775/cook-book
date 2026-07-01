@@ -1,4 +1,4 @@
-import { Component, inject, input, OnChanges, signal, SimpleChanges } from '@angular/core';
+import { Component, computed, inject, input, OnChanges, signal, SimpleChanges } from '@angular/core';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { Recipe } from '../../core/models/recipe.model';
@@ -11,11 +11,13 @@ import { StarRatingInput } from '../../shared/star-rating-input/star-rating-inpu
  * The ratings & reviews block rendered on the recipe detail page.
  *
  * Responsibilities:
- * - Show the aggregate (average + count) via `StarRatingDisplay`.
+ * - Show the aggregate (average + count) via `StarRatingDisplay`. Uses the
+ *   store's `aggregate` signal (seeded from the recipe input, refreshed after
+ *   each submit) so the display stays live and does not go stale after rating.
  * - When the user is signed in: let them pick 1–5 stars via `StarRatingInput`,
  *   add an optional review text, and submit.
  * - Show the most recent reviews (up to 10).
- * - Announce save success to screen readers via an aria-live region.
+ * - Announce save success / error to screen readers via an aria-live region.
  *
  * Delegates all Firestore I/O to `RatingStore` / `RatingService`.
  */
@@ -26,10 +28,10 @@ import { StarRatingInput } from '../../shared/star-rating-input/star-rating-inpu
     <section class="recipe-ratings" *transloco="let t">
       <h2>{{ t('rating.sectionTitle') }}</h2>
 
-      <!-- Aggregate display -->
+      <!-- Aggregate display: uses the store's live aggregate, not the stale recipe input -->
       <app-star-rating-display
-        [average]="recipe().ratingAverage"
-        [count]="recipe().ratingCount"
+        [average]="displayAverage()"
+        [count]="displayCount()"
       />
 
       @if (ratingStore.isLoading()) {
@@ -76,10 +78,12 @@ import { StarRatingInput } from '../../shared/star-rating-input/star-rating-inpu
           </button>
         </div>
 
-        <!-- Accessible save-success announcement -->
+        <!-- Accessible save-success / error announcement -->
         <div aria-live="polite" class="visually-hidden">
           @if (ratingStore.saveAnnouncement() === 'saved') {
             {{ t('rating.saved') }}
+          } @else if (ratingStore.errorMessage()) {
+            {{ t('rating.errorSave') }}
           }
         </div>
       } @else {
@@ -132,11 +136,24 @@ export class RecipeRatingSection implements OnChanges {
 
   protected readonly starsArray = [1, 2, 3, 4, 5] as const;
 
+  /**
+   * Live average for display — uses the store's `aggregate` signal (updated
+   * after each submit) so the display does not go stale. Falls back to the
+   * recipe input's value before the first load completes.
+   */
+  protected readonly displayAverage = computed(
+    () => this.ratingStore.aggregate()?.ratingAverage ?? this.recipe().ratingAverage,
+  );
+
+  protected readonly displayCount = computed(
+    () => this.ratingStore.aggregate()?.ratingCount ?? this.recipe().ratingCount,
+  );
+
   async ngOnChanges(changes: SimpleChanges): Promise<void> {
     if (changes['recipe']) {
-      const recipeId = this.recipe().recipeId;
-      if (recipeId) {
-        await this.ratingStore.load(recipeId);
+      const recipe = this.recipe();
+      if (recipe.recipeId) {
+        await this.ratingStore.load(recipe);
         // Pre-fill editor with existing rating if any.
         const existing = this.ratingStore.myRating();
         if (existing) {

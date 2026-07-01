@@ -1,6 +1,8 @@
 import { Component, input, OnChanges, output, signal, SimpleChanges } from '@angular/core';
 import { TranslocoDirective } from '@jsverse/transloco';
 
+let nextStarRatingId = 0;
+
 /**
  * Accessible interactive star-rating control implemented as a native radio group.
  * Uses visually-hidden `<input type="radio">` elements with visible star labels,
@@ -23,7 +25,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
           <input
             class="visually-hidden"
             type="radio"
-            name="star-rating"
+            [name]="radioGroupName"
             [value]="star"
             [checked]="star === selectedValue()"
             [attr.aria-label]="star === 1 ? t('rating.starOne') : t('rating.starOther', { count: star })"
@@ -46,6 +48,8 @@ export class StarRatingInput implements OnChanges {
 
   protected readonly stars = [1, 2, 3, 4, 5] as const;
   protected readonly selectedValue = signal<number>(0);
+  /** Unique name for this radio group — safe when multiple instances share a page. */
+  protected readonly radioGroupName = `star-rating-${nextStarRatingId++}`;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['value']) {

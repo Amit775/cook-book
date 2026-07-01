@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 
 import { FIRESTORE } from '../firebase/firebase.providers';
-import { computeAverage, RecipeRating, ReviewEntry, toRecipeRating } from '../models/rating.model';
+import { computeAverage, RatingAggregate, RecipeRating, ReviewEntry, toRatingAggregate, toRecipeRating } from '../models/rating.model';
 import { Recipe } from '../models/recipe.model';
 
 /**
@@ -24,6 +24,17 @@ import { Recipe } from '../models/recipe.model';
 @Injectable({ providedIn: 'root' })
 export class RatingService {
   private readonly firestore = inject(FIRESTORE);
+
+  /**
+   * Fetch the fresh aggregate (ratingCount, ratingSum, ratingAverage) from the
+   * recipe doc. Called after a successful rating submit to update the live
+   * display without needing to re-fetch the full recipe.
+   */
+  async getAggregate(recipeId: string): Promise<RatingAggregate> {
+    const reference = doc(this.firestore, 'recipes', recipeId);
+    const snapshot = await getDoc(reference);
+    return snapshot.exists() ? toRatingAggregate(snapshot.data() as DocumentData) : { ratingCount: 0, ratingSum: 0, ratingAverage: 0 };
+  }
 
   /** Fetch the current user's rating for a recipe, or `null` if none exists. */
   async getMyRating(recipeId: string, userId: string): Promise<RecipeRating | null> {

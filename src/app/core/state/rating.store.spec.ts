@@ -73,6 +73,7 @@ describe('RatingStore', () => {
     getMyRating: ReturnType<typeof vi.fn>;
     listReviews: ReturnType<typeof vi.fn>;
     setRating: ReturnType<typeof vi.fn>;
+    getAggregate: ReturnType<typeof vi.fn>;
   };
 
   function setup(uid: string | null = 'user1') {
@@ -80,6 +81,7 @@ describe('RatingStore', () => {
       getMyRating: vi.fn(async () => null),
       listReviews: vi.fn(async () => []),
       setRating: vi.fn(async () => undefined),
+      getAggregate: vi.fn(async () => ({ ratingCount: 1, ratingSum: 5, ratingAverage: 5 })),
     };
 
     TestBed.configureTestingModule({
@@ -112,7 +114,7 @@ describe('RatingStore', () => {
     ratingServiceStub.getMyRating.mockResolvedValue(rating);
     ratingServiceStub.listReviews.mockResolvedValue([review]);
 
-    await store.load('recipe1');
+    await store.load(makeRecipe());
 
     expect(store.myRating()).toEqual(rating);
     expect(store.reviews()).toEqual([review]);
@@ -121,7 +123,7 @@ describe('RatingStore', () => {
 
   it('load() skips getMyRating when not signed in', async () => {
     const store = setup(null); // anonymous
-    await store.load('recipe1');
+    await store.load(makeRecipe());
 
     expect(ratingServiceStub.getMyRating).not.toHaveBeenCalled();
     expect(store.myRating()).toBeNull();

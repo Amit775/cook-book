@@ -128,11 +128,31 @@ service cloud.firestore {
       }
 
       // Ratings: one doc per rater (doc id == rater uid → one-per-user structurally).
-      // A non-owner may read ratings on any recipe they can already read, and
-      // write/edit only their own rating doc (isOwner(userId) ensures doc id == auth uid).
+      //
+      // IMPORTANT: inside this nested match block, `resource` refers to the rating
+      // doc itself (or is null on create), NOT to the parent recipe doc. We therefore
+      // gate access on the PARENT recipe using a cross-doc `get()` so we can evaluate
+      // the recipe's actual visibility/authorId/sharedWith fields.
+      //
+      // `canViewParentRecipe()` mirrors the logic of `canReadRecipe()` above but reads
+      // from the fetched recipe snapshot instead of `resource.data`.
       match /ratings/{userId} {
-        allow read: if canReadRecipe();
-        allow create, update: if isOwner(userId) && canReadRecipe()
+        function parentRecipe() {
+          return get(/databases/$(database)/documents/recipes/$(recipeId)).data;
+        }
+
+        function canViewParentRecipe() {
+          let recipe = parentRecipe();
+          return recipe.visibility == 'public'
+            || recipe.visibility == 'unlisted'
+            || (isSignedIn() && (
+                  request.auth.uid == recipe.authorId
+                  || request.auth.uid in recipe.sharedWith
+               ));
+        }
+
+        allow read: if canViewParentRecipe();
+        allow create, update: if isOwner(userId) && canViewParentRecipe()
           && request.resource.data.authorId == userId
           && request.resource.data.stars is int
           && request.resource.data.stars >= 1 && request.resource.data.stars <= 5
