@@ -212,6 +212,25 @@
     "recipeCountOne": "מתכון אחד",
     "recipeCountOther": "{{count}} מתכונים"
   },
+  "rating": {
+    "sectionTitle": "דירוגים וביקורות",
+    "average": "{{average}} מתוך 5",
+    "countOne": "ביקורת אחת",
+    "countOther": "{{count}} ביקורות",
+    "noRatings": "אין דירוגים עדיין",
+    "yourRating": "הדירוג שלך",
+    "rateThis": "דרגו את המתכון",
+    "starOne": "כוכב אחד",
+    "starOther": "{{count}} כוכבים",
+    "reviewLabel": "ביקורת (אופציונלי)",
+    "reviewPlaceholder": "שתפו את הרושם שלכם...",
+    "submit": "שליחת דירוג",
+    "update": "עדכון דירוג",
+    "saving": "שומר...",
+    "saved": "הדירוג נשמר!",
+    "signInToRate": "התחברו כדי לדרג את המתכון.",
+    "reviewsTitle": "ביקורות אחרונות"
+  },
   "search": {
     "label": "חיפוש מתכונים",
     "placeholder": "חיפוש לפי כותרת, מרכיב או תגית",

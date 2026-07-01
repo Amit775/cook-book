@@ -82,6 +82,9 @@ const FAKE_RECIPE: Recipe = {
   shareId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  ratingCount: 0,
+  ratingSum: 0,
+  ratingAverage: 0,
 };
 
 const PLANNED_RECIPE: PlannedRecipe = {

@@ -35,6 +35,9 @@ function makeRecipe(overrides: Partial<Recipe> = {}): Recipe {
     shareId: null,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
+    ratingCount: 0,
+    ratingSum: 0,
+    ratingAverage: 0,
     ...overrides,
   };
 }

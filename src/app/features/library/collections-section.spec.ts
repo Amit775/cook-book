@@ -57,6 +57,9 @@ function makeRecipe(recipeId: string): Recipe {
     shareId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    ratingCount: 0,
+    ratingSum: 0,
+    ratingAverage: 0,
   };
 }
 

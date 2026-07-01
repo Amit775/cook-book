@@ -258,6 +258,9 @@ function toRecipe(recipeId: string, data: DocumentData): Recipe {
     shareId: data['shareId'] ?? null,
     createdAt: toDate(data['createdAt']),
     updatedAt: toDate(data['updatedAt']),
+    ratingCount: data['ratingCount'] ?? 0,
+    ratingSum: data['ratingSum'] ?? 0,
+    ratingAverage: data['ratingAverage'] ?? 0,
   };
 }
 

@@ -1,0 +1,40 @@
+/**
+ * StarRatingDisplay — read-only aggregate star display.
+ * Decorative stars are aria-hidden; a single accessible label is on the container.
+ * Spacing uses logical properties for RTL compatibility.
+ */
+
+.star-rating-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.star-rating-display__stars {
+  display: inline-flex;
+  gap: 0.125rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  /* Empty stars at reduced opacity */
+  color: #888;
+}
+
+.star-rating-display__star--filled {
+  color: #f5a623;
+}
+
+.star-rating-display__average {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.star-rating-display__count {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.star-rating-display__empty {
+  font-size: 0.85rem;
+  color: #888;
+}

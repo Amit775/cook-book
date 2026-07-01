@@ -1,6 +1,7 @@
 export * from './duration.model';
 export * from './ingredient.model';
 export * from './meal-plan.model';
+export * from './rating.model';
 export * from './recipe.model';
 export * from './recipe-type.model';
 export * from './recipe-visibility.model';

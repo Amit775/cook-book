@@ -36,10 +36,19 @@ export interface Recipe {
   shareId: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /**
+   * Denormalized rating aggregate fields — maintained by client-side transaction
+   * in `RatingService.setRating`. Not author-editable (excluded from `RecipeDraft`).
+   */
+  ratingCount: number;
+  ratingSum: number;
+  /** Average rounded to 1 decimal; 0 when no ratings. */
+  ratingAverage: number;
 }
 
 /**
  * The author-editable fields of a recipe. `recipeId`, `authorId`, `rootId`,
- * `createdAt`, and `updatedAt` are assigned by the data layer, not the editor.
+ * `createdAt`, `updatedAt`, and the three rating aggregate fields are assigned
+ * by the data layer, not the editor.
  */
-export type RecipeDraft = Omit<Recipe, 'recipeId' | 'authorId' | 'rootId' | 'shareId' | 'createdAt' | 'updatedAt'>;
+export type RecipeDraft = Omit<Recipe, 'recipeId' | 'authorId' | 'rootId' | 'shareId' | 'createdAt' | 'updatedAt' | 'ratingCount' | 'ratingSum' | 'ratingAverage'>;
